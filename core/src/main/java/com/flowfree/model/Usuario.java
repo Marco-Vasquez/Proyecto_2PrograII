@@ -18,7 +18,7 @@ public class Usuario implements Serializable{
     private static final long serialVersionUID = 1L;
 
     private String username;
-    private String password;
+    private String passwordHash;
     private String salt;
     private String nombreCompleto;
     private LocalDateTime fechaRegistro;
@@ -30,7 +30,7 @@ public class Usuario implements Serializable{
 
     public Usuario(String username, String password, String salt, String nombreCompleto){
         this.username = username;
-        this.password = password;
+        this.passwordHash = password;
         this.salt = salt;
         this.nombreCompleto = nombreCompleto;
         this.fechaRegistro = LocalDateTime.now();
@@ -55,8 +55,8 @@ public class Usuario implements Serializable{
         return username; 
     }
     
-    public String getPassword() { 
-        return password; 
+    public String getPasswordHash() { 
+        return passwordHash; 
     }
     
     public String getSalt() { 
