@@ -2,7 +2,7 @@ package com.flowfree;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-//import com.flowfree.screens.PantallaLogin;
+import com.flowfree.screens.PantallaLogin;
 
 public class FlowFreeGame extends Game {
 
@@ -11,7 +11,7 @@ public class FlowFreeGame extends Game {
     @Override
     public void create() {
         batch = new SpriteBatch();
-        //setScreen(new PantallaLogin(this));
+        setScreen(new PantallaLogin(this));
     }
 
     @Override
