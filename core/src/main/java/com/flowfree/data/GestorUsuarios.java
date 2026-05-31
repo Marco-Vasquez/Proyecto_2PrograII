@@ -83,4 +83,24 @@ public class GestorUsuarios {
             return null;
         }
     }
+    public Usuario registrarUsuarioSeguro(String username,String passwordPlana,String nombreCompleto)throws com.flowfree.exceptions.UserExistenteException,com.flowfree.exceptions.InvalidPasswordException{
+        if(userExists(username)){
+            throw new com.flowfree.exceptions.UserExistenteException(username);
+        }
+        if(!HashUtil.isValidPassword(passwordPlana)){
+            throw new com.flowfree.exceptions.InvalidPasswordException("Debe tener mínimo 8 caracteres, letras, números y mínimo un caracter especial");
+        }
+        String salt,hash;
+        Usuario nuevoUser;
+        salt=HashUtil.generarSalt();
+        hash=HashUtil.hashearPassword(passwordPlana, salt);
+        nuevoUser=new Usuario(username,hash,salt,nombreCompleto);
+        try{
+            Serializador.guardar(nuevoUser, getRutaArchivo(username));
+            return nuevoUser;
+        }
+        catch(java.io.IOException error){
+            throw new RuntimeException("No se pudo guardar el usuario",error);
+        }
+    }
 }
