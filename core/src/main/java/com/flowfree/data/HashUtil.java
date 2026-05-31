@@ -41,7 +41,7 @@ public final class HashUtil {
             return Base64.getEncoder().encodeToString(hash);
         }
         catch (NoSuchAlgorithmException | InvalidKeySpecException error){
-            throw new RuntimeException("Error al hashear la contraseña",error);
+            throw new RuntimeException("Error al hashear la contraseÃ±a",error);
         }
     }
     public static boolean verificarPassword(String passwordIngresada,String salt,String hashGuardado){

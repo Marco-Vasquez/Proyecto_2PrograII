@@ -88,7 +88,7 @@ public class GestorUsuarios {
             throw new com.flowfree.exceptions.UserExistenteException(username);
         }
         if(!HashUtil.isValidPassword(passwordPlana)){
-            throw new com.flowfree.exceptions.InvalidPasswordException("Debe tener mínimo 8 caracteres, letras, números y mínimo un caracter especial");
+            throw new com.flowfree.exceptions.InvalidPasswordException("Debe tener mÃ­Â­nimo 8 caracteres, letras, nÃºmeros y mÃ­nimo un caracter especial");
         }
         String salt,hash;
         Usuario nuevoUser;

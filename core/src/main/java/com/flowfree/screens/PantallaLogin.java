@@ -33,20 +33,25 @@ public class PantallaLogin implements Screen {
 
     private final GestorUsuarios gestorUsuarios;
     private boolean modoRegistro;
+    private boolean passwordVisible;
+
     private TextField campoUsername;
     private TextField campoPassword;
-    private Label mensajeEstado;
     private TextField campoNombreCompleto;
     private TextField campoConfirmarPassword;
-    
+
     private Label labelOchoCaracteres;
     private Label labelLetras;
     private Label labelNumeros;
     private Label labelSimbolos;
     private Label labelPasswordValida;
+    private Label mensajeEstado;
 
-    private boolean passwordVisible;
     private Table tablaContenido;
+
+    private static final float ANCHO_CAMPO = 280f;
+    private static final float ALTO_CAMPO  = 36f;
+    private static final float ANCHO_PANEL = 420f;
 
     public PantallaLogin(FlowFreeGame juego) {
         this.juego = juego;
@@ -59,8 +64,12 @@ public class PantallaLogin implements Screen {
     public void show() {
         escenario = new Stage(new ScreenViewport());
         Gdx.input.setInputProcessor(escenario);
-
         skin = new Skin(Gdx.files.internal("ui/uiskin.json"));
+        construirInterfaz();
+    }
+
+    private void construirInterfaz() {
+        escenario.clear();
 
         Table tablaPrincipal = new Table();
         tablaPrincipal.setFillParent(true);
@@ -68,7 +77,13 @@ public class PantallaLogin implements Screen {
         escenario.addActor(tablaPrincipal);
 
         tablaContenido = new Table();
-        tablaPrincipal.add(tablaContenido).pad(20);
+        tablaContenido.pad(30);
+
+        ScrollPane scroll = new ScrollPane(tablaContenido, skin);
+        scroll.setFadeScrollBars(true);
+        scroll.setScrollingDisabled(true, false);
+
+        tablaPrincipal.add(scroll).width(ANCHO_PANEL).maxHeight(540);
 
         construirFormulario();
     }
@@ -76,79 +91,61 @@ public class PantallaLogin implements Screen {
     private void construirFormulario() {
         tablaContenido.clearChildren();
 
-        float anchocamp = 300;
-        float altoCampo = 40;
+        String titulo = modoRegistro ? "Crear cuenta" : "Iniciar sesi√≥n";
+        tablaContenido.add(new Label(titulo, skin, "default"))
+                .colspan(2).center().padBottom(24).row();
 
-        String titulo = modoRegistro ? "Registro de Usuario" : "Iniciar Sesion";
-        tablaContenido.add(new Label(titulo, skin, "default")).colspan(2).padBottom(20).row();
-
-        tablaContenido.add(new Label("Username:", skin)).left().padRight(10);
+        tablaContenido.add(new Label("Usuario:", skin)).left().padBottom(4);
+        tablaContenido.add().row();
         campoUsername = new TextField("", skin);
-        tablaContenido.add(campoUsername).width(anchocamp).height(altoCampo).row();
+        tablaContenido.add(campoUsername)
+                .colspan(2).width(ANCHO_CAMPO).height(ALTO_CAMPO).padBottom(12).row();
 
         if (modoRegistro) {
-            tablaContenido.add(new Label("Nombre completo:", skin)).left().padRight(10);
+            tablaContenido.add(new Label("Nombre completo:", skin)).left().padBottom(4);
+            tablaContenido.add().row();
             campoNombreCompleto = new TextField("", skin);
-            tablaContenido.add(campoNombreCompleto).width(anchocamp).height(altoCampo).row();
+            tablaContenido.add(campoNombreCompleto)
+                    .colspan(2).width(ANCHO_CAMPO).height(ALTO_CAMPO).padBottom(12).row();
         }
 
-        tablaContenido.add(new Label("Contrasena:", skin)).left().padRight(10);
-        Table filaPassword = new Table();
-        campoPassword = new TextField("", skin);
-        campoPassword.setPasswordMode(true);
-        campoPassword.setPasswordCharacter('*');
-        filaPassword.add(campoPassword).width(230).height(altoCampo);
-
-        TextButton botonVerPassword = new TextButton("Ver", skin);
-        filaPassword.add(botonVerPassword).width(60).height(altoCampo).padLeft(5);
-        tablaContenido.add(filaPassword).row();
+        tablaContenido.add(new Label("Contrase√±a:", skin)).left().padBottom(4);
+        tablaContenido.add().row();
+        tablaContenido.add(crearFilaPassword()).colspan(2).padBottom(12).row();
 
         if (modoRegistro) {
-            tablaContenido.add(new Label("Confirmar contrasena:", skin)).left().padRight(10);
+            tablaContenido.add(new Label("Confirmar contrase√±a:", skin)).left().padBottom(4);
+            tablaContenido.add().row();
             campoConfirmarPassword = new TextField("", skin);
             campoConfirmarPassword.setPasswordMode(true);
             campoConfirmarPassword.setPasswordCharacter('*');
-            tablaContenido.add(campoConfirmarPassword).width(anchocamp).height(altoCampo).row();
+            tablaContenido.add(campoConfirmarPassword)
+                    .colspan(2).width(ANCHO_CAMPO).height(ALTO_CAMPO).padBottom(12).row();
         }
 
-        if (modoRegistro){
-            tablaContenido.add(new Label("Requisitos:", skin)).left().padTop(10);
-            Table tablaRequisitos = new Table();
-            labelOchoCaracteres = new Label("Minimo 8 caracteres", skin);
-            labelLetras = new Label("Contiene letras", skin);
-            labelNumeros = new Label("Contiene numeros", skin);
-            labelSimbolos = new Label("Contiene simbolo especial", skin);
-            labelPasswordValida = new Label("Contrasena v·lida", skin);
-            tablaRequisitos.add(labelOchoCaracteres).left().row();
-            tablaRequisitos.add(labelLetras).left().row();
-            tablaRequisitos.add(labelNumeros).left().row();
-            tablaRequisitos.add(labelSimbolos).left().row();
-            tablaRequisitos.add(labelPasswordValida).left().row();
-            tablaContenido.add(tablaRequisitos).left().padBottom(10).row();
+        if (modoRegistro) {
+            tablaContenido.add(crearTablaRequisitos()).colspan(2).left().padBottom(14).row();
         }
 
-        mensajeEstado = new Label("",skin);
-        tablaContenido.add(mensajeEstado).colspan(2).padTop(5).row();
+        mensajeEstado = new Label("", skin);
+        mensajeEstado.setWrap(true);
+        tablaContenido.add(mensajeEstado)
+                .colspan(2).width(ANCHO_CAMPO).padBottom(10).row();
 
-        String textoBotonAccion = modoRegistro ? "Registrarse" : "Entrar";
-        TextButton botonAccion = new TextButton(textoBotonAccion,skin);
-        tablaContenido.add(botonAccion).colspan(2).width(200).height(45).padTop(10).row();
+        String textoAccion = modoRegistro ? "Registrarse" : "Entrar";
+        TextButton botonAccion = new TextButton(textoAccion, skin);
+        tablaContenido.add(botonAccion)
+                .colspan(2).width(ANCHO_CAMPO).height(42).padBottom(8).row();
 
-        String textoBotonCambio = modoRegistro ? "øYa tienes cuenta? Inicia sesion" : "øNo tienes cuenta? RegÌstrate";
-        TextButton botonCambiarModo = new TextButton(textoBotonCambio,skin);
-        tablaContenido.add(botonCambiarModo).colspan(2).padTop(5).row();
+        String textoCambio = modoRegistro ? "Ya tienes cuenta? Inicia sesion" : "No tienes cuenta? Registrate";
+        TextButton botonCambiarModo = new TextButton(textoCambio, skin);
+        tablaContenido.add(botonCambiarModo)
+                .colspan(2).width(ANCHO_CAMPO).height(36).row();
 
-        botonVerPassword.addListener(new ChangeListener() {
-            @Override
-            public void changed(ChangeEvent evento, Actor actor) {
-                alternarVisibilidadPassword(botonVerPassword);
-            }
-        });
-
-        if (modoRegistro){
-            campoPassword.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener(){
+        if (modoRegistro) {
+            campoPassword.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener() {
                 @Override
-                public boolean keyTyped(com.badlogic.gdx.scenes.scene2d.InputEvent evento,char caracter){
+                public boolean keyTyped(com.badlogic.gdx.scenes.scene2d.InputEvent evento, char caracter) {
                     actualizarRequisitosPassword(campoPassword.getText());
                     return false;
                 }
@@ -157,11 +154,10 @@ public class PantallaLogin implements Screen {
 
         botonAccion.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent evento, Actor actor){
-                if (modoRegistro){
+            public void changed(ChangeEvent evento, Actor actor) {
+                if (modoRegistro) {
                     intentarRegistro();
-                } 
-                else{
+                } else {
                     intentarLogin();
                 }
             }
@@ -169,15 +165,57 @@ public class PantallaLogin implements Screen {
 
         botonCambiarModo.addListener(new ChangeListener() {
             @Override
-            public void changed(ChangeEvent evento, Actor actor){
-                modoRegistro = !modoRegistro;
-                passwordVisible = false;
-                construirFormulario();
+            public void changed(ChangeEvent evento, Actor actor) {
+                modoRegistro     = !modoRegistro;
+                passwordVisible  = false;
+                campoConfirmarPassword = null;
+                construirInterfaz();
             }
         });
     }
 
-    private void alternarVisibilidadPassword(TextButton boton){
+    private Table crearFilaPassword() {
+        Table fila = new Table();
+
+        campoPassword = new TextField("", skin);
+        campoPassword.setPasswordMode(true);
+        campoPassword.setPasswordCharacter('*');
+
+        TextButton botonVerPassword = new TextButton("Ver", skin);
+
+        fila.add(campoPassword).width(ANCHO_CAMPO - 70).height(ALTO_CAMPO);
+        fila.add(botonVerPassword).width(62).height(ALTO_CAMPO).padLeft(6);
+
+        botonVerPassword.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent evento, Actor actor) {
+                alternarVisibilidadPassword(botonVerPassword);
+            }
+        });
+
+        return fila;
+    }
+
+    private Table crearTablaRequisitos() {
+        Table tablaRequisitos = new Table();
+        tablaRequisitos.left();
+
+        labelOchoCaracteres = new Label("XX M√≠nimo 8 caracteres", skin);
+        labelLetras = new Label("XX Contiene letras", skin);
+        labelNumeros = new Label("XX Contiene n√∫meros", skin);
+        labelSimbolos = new Label("XX Contiene s√≠mbolo especial", skin);
+        labelPasswordValida = new Label("XX Contrase√±a valida", skin);
+
+        tablaRequisitos.add(labelOchoCaracteres).left().padBottom(2).row();
+        tablaRequisitos.add(labelLetras).left().padBottom(2).row();
+        tablaRequisitos.add(labelNumeros).left().padBottom(2).row();
+        tablaRequisitos.add(labelSimbolos).left().padBottom(2).row();
+        tablaRequisitos.add(labelPasswordValida).left().row();
+
+        return tablaRequisitos;
+    }
+    
+    private void alternarVisibilidadPassword(TextButton boton) {
         passwordVisible = !passwordVisible;
         campoPassword.setPasswordMode(!passwordVisible);
         boton.setText(passwordVisible ? "Ocultar" : "Ver");
@@ -187,41 +225,41 @@ public class PantallaLogin implements Screen {
     }
 
     private void actualizarRequisitosPassword(String password) {
-        marcarRequisito(labelOchoCaracteres, HashUtil.tieneMinOchoCarac(password),"Minimo 8 caracteres");
-        marcarRequisito(labelLetras,HashUtil.tieneLetras(password),"Contiene letras");
-        marcarRequisito(labelNumeros,HashUtil.tieneNumeros(password),"Contiene n˙meros");
-        marcarRequisito(labelSimbolos,HashUtil.tieneSimbolos(password),"Contiene sÌmbolo especial");
-        marcarRequisito(labelPasswordValida, HashUtil.isValidPassword(password),"Contrasena valida");
+        marcarRequisito(labelOchoCaracteres,HashUtil.tieneMinOchoCarac(password), "M√≠nimo 8 caracteres");
+        marcarRequisito(labelLetras,HashUtil.tieneLetras(password), "Contiene letras");
+        marcarRequisito(labelNumeros,HashUtil.tieneNumeros(password), "Contiene n√∫meros");
+        marcarRequisito(labelSimbolos, HashUtil.tieneSimbolos(password), "Contiene simbolo especial");
+        marcarRequisito(labelPasswordValida,HashUtil.isValidPassword(password), "Contrase√±a v√°lida");
     }
 
     private void marcarRequisito(Label etiqueta, boolean cumplido, String texto) {
-        etiqueta.setText((cumplido ? "? " : "? ") + texto);
+        etiqueta.setText((cumplido ? "OK " : "XX ") + texto);
     }
 
     private void intentarLogin() {
-        String username  = campoUsername.getText().trim();
-        String password  = campoPassword.getText();
+        String username = campoUsername.getText().trim();
+        String password = campoPassword.getText();
 
         if (username.isEmpty() || password.isEmpty()) {
-            mensajeEstado.setText("Complet· todos los campos.");
+            mensajeEstado.setText("Completa todos los campos");
             return;
         }
 
         Usuario[] resultado = new Usuario[1];
-        GestorUsuarios.ResultadoLogin estado = gestorUsuarios.iniciarSesion(username,password,resultado);
+        GestorUsuarios.ResultadoLogin estado = gestorUsuarios.iniciarSesion(username, password, resultado);
 
         switch (estado) {
             case EXITO:
-                mensajeEstado.setText("°Bienvenido, " + resultado[0].getNombreCompleto() + "!");
+                mensajeEstado.setText("Bienvenido, " + resultado[0].getNombreCompleto() + "!");
                 break;
             case USUARIO_NO_EXISTE:
-                mensajeEstado.setText("El usuario no existe.");
+                mensajeEstado.setText("El usuario no existe");
                 break;
             case PASSWORD_INCORRECTA:
-                mensajeEstado.setText("Contrasena incorrecta.");
+                mensajeEstado.setText("Contrase√±a incorrecta");
                 break;
             case ERROR_ARCHIVO:
-                mensajeEstado.setText("Error al leer datos del usuario.");
+                mensajeEstado.setText("Error al leer datos del usuario");
                 break;
         }
     }
@@ -232,21 +270,23 @@ public class PantallaLogin implements Screen {
         String password = campoPassword.getText();
         String confirmacion = campoConfirmarPassword.getText();
 
-        if (username.isEmpty() || nombreCompleto.isEmpty() || password.isEmpty() || confirmacion.isEmpty()){
-            mensajeEstado.setText("Complet· todos los campos.");
+        if (username.isEmpty() || nombreCompleto.isEmpty() || password.isEmpty() || confirmacion.isEmpty()) {
+            mensajeEstado.setText("Completa todos los campos");
             return;
         }
 
-        if (!password.equals(confirmacion)){
-            mensajeEstado.setText("Las contraseÒas no coinciden.");
+        if (!password.equals(confirmacion)) {
+            mensajeEstado.setText("Las contrasenas no coinciden");
             return;
         }
 
         try {
             gestorUsuarios.registrarUsuarioSeguro(username, password, nombreCompleto);
-            mensajeEstado.setText("Usuario registrado. °Ahora podÈs iniciar sesiÛn!");
-            modoRegistro = false;
-            construirFormulario();
+            mensajeEstado.setText("Usuario registrado. Ahora puedes iniciar sesion.");
+            modoRegistro    = false;
+            passwordVisible = false;
+            campoConfirmarPassword = null;
+            construirInterfaz();
         } catch (UserExistenteException error) {
             mensajeEstado.setText(error.getMessage());
         } catch (InvalidPasswordException error) {
@@ -255,28 +295,28 @@ public class PantallaLogin implements Screen {
     }
 
     @Override
-    public void render(float delta){
-        Gdx.gl.glClearColor(0.12f,0.12f,0.18f,1);
+    public void render(float delta) {
+        Gdx.gl.glClearColor(0.13f, 0.13f, 0.20f, 1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         escenario.act(delta);
         escenario.draw();
     }
 
     @Override
-    public void resize(int ancho,int alto){
+    public void resize(int ancho, int alto) {
         escenario.getViewport().update(ancho, alto, true);
     }
 
-    @Override public void pause(){}
-    @Override public void resume(){}
+    @Override public void pause()  {}
+    @Override public void resume() {}
 
     @Override
-    public void hide(){
+    public void hide() {
         dispose();
     }
 
     @Override
-    public void dispose(){
+    public void dispose() {
         escenario.dispose();
         skin.dispose();
     }
