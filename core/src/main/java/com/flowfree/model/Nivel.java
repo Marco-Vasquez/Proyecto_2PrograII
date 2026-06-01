@@ -58,4 +58,13 @@ public class Nivel implements Serializable{
         this.desbloqueado = true; 
     }
     
+    public Tablero crearTablero(){
+        Tablero tablero;
+        tablero=new Tablero(filas,columnas,puntosIniciales.length);
+        for(int[] punto:puntosIniciales){
+            tablero.colocarPuntoOrigen(punto[0],punto[1],punto[4]);
+            tablero.colocarPuntoOrigen(punto[2],punto[3],punto[4]);
+        }
+        return tablero;
+    }
 }
