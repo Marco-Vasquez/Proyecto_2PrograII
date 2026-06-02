@@ -250,6 +250,7 @@ public class PantallaLogin implements Screen {
 
         switch (estado) {
             case EXITO:
+                juego.setScreen(new PantallaJuego(juego, resultado[0], 1));
                 mensajeEstado.setText("Bienvenido, " + resultado[0].getNombreCompleto() + "!");
                 break;
             case USUARIO_NO_EXISTE:

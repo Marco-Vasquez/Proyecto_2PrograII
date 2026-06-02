@@ -18,12 +18,14 @@ public class Perfil implements Serializable{
     private String rutaFotoPerfil;
     private float volumen;
     private String idioma;
+    private PreferenciasJuego preferencias;
 
     public Perfil() {
         this.avatarIndex = 0;
         this.rutaFotoPerfil = null;
         this.volumen = 1.0f;
         this.idioma = "es";
+        this.preferencias=new PreferenciasJuego();
     }
 
     public int getAvatarIndex() { 
@@ -58,4 +60,7 @@ public class Perfil implements Serializable{
         this.idioma = idioma;
     }
     
+    public PreferenciasJuego getPreferencias(){
+        return preferencias;
+    }
 }
