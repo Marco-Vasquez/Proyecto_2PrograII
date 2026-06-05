@@ -48,9 +48,12 @@ public class GestorUsuarios {
         try{
             Usuario usuario;
             usuario=(Usuario) Serializador.cargar(getRutaArchivo(username));
+            if(!usuario.getUsername().equals(username)){
+                return ResultadoLogin.USUARIO_NO_EXISTE;
+            }
             if(!HashUtil.verificarPassword(passwordPlana,usuario.getSalt(),usuario.getPasswordHash())){
                 return ResultadoLogin.PASSWORD_INCORRECTA;
-            }
+            }   
             usuario.actualizarUltimaSesion();
             guardarUser(usuario);
             if(usuarioSalida!=null && usuarioSalida.length>=0){

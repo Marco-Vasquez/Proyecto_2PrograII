@@ -137,7 +137,7 @@ public class PantallaLogin implements Screen {
         tablaContenido.add(botonAccion)
                 .colspan(2).width(ANCHO_CAMPO).height(42).padBottom(8).row();
 
-        String textoCambio = modoRegistro ? "Ya tienes cuenta? Inicia sesion" : "No tienes cuenta? Registrate";
+        String textoCambio = modoRegistro ? "Ya tienes cuenta? Inicia sesión" : "No tienes cuenta? Registrate";
         TextButton botonCambiarModo = new TextButton(textoCambio, skin);
         tablaContenido.add(botonCambiarModo)
                 .colspan(2).width(ANCHO_CAMPO).height(36).row();
@@ -251,7 +251,6 @@ public class PantallaLogin implements Screen {
         switch (estado) {
             case EXITO:
                 juego.setScreen(new PantallaJuego(juego, resultado[0], 1));
-                mensajeEstado.setText("Bienvenido, " + resultado[0].getNombreCompleto() + "!");
                 break;
             case USUARIO_NO_EXISTE:
                 mensajeEstado.setText("El usuario no existe");
@@ -277,13 +276,13 @@ public class PantallaLogin implements Screen {
         }
 
         if (!password.equals(confirmacion)) {
-            mensajeEstado.setText("Las contrasenas no coinciden");
+            mensajeEstado.setText("Las contraseñas no coinciden");
             return;
         }
 
         try {
             gestorUsuarios.registrarUsuarioSeguro(username, password, nombreCompleto);
-            mensajeEstado.setText("Usuario registrado. Ahora puedes iniciar sesion.");
+            mensajeEstado.setText("Usuario registrado. Ahora puedes iniciar sesión.");
             modoRegistro    = false;
             passwordVisible = false;
             campoConfirmarPassword = null;

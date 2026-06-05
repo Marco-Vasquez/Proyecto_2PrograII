@@ -27,15 +27,15 @@ public final class EstiloUI {
       BTN_CYAN,BTN_VERDE,BTN_AMARILLO,BTN_MORADOCLARO,BTN_NARANJA,BTN_ROJO,BTN_MORADOCLARO  
     };
     public static final Color[] COLORES_GAME={
-      Color.WHITE,
-      new Color(0.95f,0.15f,0.15f,1f),  
-      new Color(0.20f,0.50f,0.95f,1f),  
-      new Color(0.20f,0.82f,0.25f,1f),  
-      new Color(0.95f,0.88f,0.10f,1f),  
-      new Color(0.95f,0.52f,0.08f,1f),
-      new Color(0.10f,0.88f,0.90f,1f),  
-      new Color(0.90f,0.25f,0.88f,1f),  
-      new Color(0.58f,0.18f,0.80f,1f)
+        Color.WHITE,
+        new Color(0.95f,0.15f,0.15f,1f),
+        new Color(0.20f,0.50f,0.95f,1f),
+        new Color(0.20f,0.82f,0.25f,1f),
+        new Color(0.95f,0.88f,0.10f,1f),
+        new Color(0.95f,0.52f,0.08f,1f),
+        new Color(0.10f,0.88f,0.90f,1f),
+        new Color(0.90f,0.25f,0.88f,1f),
+        new Color(0.55f,0.10f,0.10f,1f)
     };
     public static final float PANEL_ANCHO_FRAC=0.70f;
     public static final float PANEL_ALTO_FRAC=0.78f;

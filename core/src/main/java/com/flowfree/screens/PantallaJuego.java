@@ -27,7 +27,7 @@ public class PantallaJuego implements Screen{
     private static final float RADIO_PUNTO=0.38f;
     private static final float GROSOR_VIA=0.36f;
     private static final float ALTO_ENC=48f;
-    private static final float ALTO_HUD=58f;
+    private static final float ALTO_HUD=44f;
     private static final float MARGEN=10f;
     private final FlowFreeGame juego;
     private final Usuario usuarioAct;
@@ -52,29 +52,27 @@ public class PantallaJuego implements Screen{
     private float panelAlto;
     private int ultimaFilaArrastre=-1;
     private int ultimaColArrastre=-1;
+    private boolean trazoAvanzo=false;
     public PantallaJuego(FlowFreeGame juego,Usuario usuarioAct,int numNivel){
         this.juego=juego;
         this.usuarioAct=usuarioAct;
         this.numNivelInicial=numNivel;
     }
     public void show(){
-        escenario=new Stage(new ScreenViewport());
         skin=new Skin(Gdx.files.internal("ui/uiskin.json"));
         dibujador=new ShapeRenderer();
         gestorNiveles=new GestorNiveles();
         gestorNiveles.aplicarProgresoUsuario(usuarioAct.getNivelDesbloqueado());
         flowfree=new FlowFree();
         flowfree.cargarNivel(gestorNiveles.getNivel(numNivelInicial));
-        calcularPanel();
-        calcularGeometriaTablero();
-        construirHUD();
-        Gdx.input.setInputProcessor(escenario);
+        construirEscenario();
     }
     public void render(float delta){
         actualizarTimer(delta);
         procesarInput();
         Gdx.gl.glClearColor(EstiloUI.FONDO.r,EstiloUI.FONDO.g,EstiloUI.FONDO.b,1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        dibujador.setProjectionMatrix(escenario.getViewport().getCamera().combined);
         dibujarFondo();
         dibujarTablero();
         escenario.act(delta);
@@ -82,17 +80,26 @@ public class PantallaJuego implements Screen{
         actualizarHUD();
     }
     public void resize(int ancho,int alto){
-        escenario.getViewport().update(ancho,alto,true);
-        calcularPanel();
-        calcularGeometriaTablero();
+        if(escenario!=null){
+            escenario.dispose();
+        }
+        construirEscenario();
     }
     public void pause(){}
     public void resume(){}
     public void hide(){dispose();}
     public void dispose(){
-        escenario.dispose();
+        if(escenario!=null) escenario.dispose();
         skin.dispose();
         dibujador.dispose();
+    }
+    private void construirEscenario(){
+        escenario=new Stage(new ScreenViewport());
+        Gdx.input.setInputProcessor(escenario);
+        escenario.getViewport().update(Gdx.graphics.getWidth(),Gdx.graphics.getHeight(),true);
+        calcularPanel();
+        calcularGeometriaTablero();
+        construirHUD();
     }
     private void calcularPanel(){
         float anchoTotal=Gdx.graphics.getWidth();
@@ -109,8 +116,10 @@ public class PantallaJuego implements Screen{
         float espacioH=panelAncho-MARGEN*2;
         tamCelda=Math.min(espacioH/tablero.getColumnas(),espacioV/tablero.getFilas());
         float anchoTablero=tamCelda*tablero.getColumnas();
+        float altoTablero=tamCelda*tablero.getFilas();
         origenX=panelX+(panelAncho-anchoTablero)/2f;
-        origenY=panelY+ALTO_HUD+MARGEN*2;
+        float centroVerticalTablero=panelY+ALTO_HUD+MARGEN+(espacioV-altoTablero)/2f;
+        origenY=centroVerticalTablero;
     }
     private void dibujarFondo(){
         dibujador.begin(ShapeRenderer.ShapeType.Filled);
@@ -124,30 +133,31 @@ public class PantallaJuego implements Screen{
         dibujador.end();
     }
     private void construirHUD(){
-        float encY=panelY+panelAlto-ALTO_ENC-8f;
         Table tablaEnc=new Table();
-        tablaEnc.setPosition(panelX,encY);
-        tablaEnc.setSize(panelAncho,ALTO_ENC);
-        tablaEnc.center();
-        tablaEnc.add(new Label("Flow Free",skin)).center();
+        tablaEnc.setFillParent(true);
+        tablaEnc.top();
+        float margenArriba=Gdx.graphics.getHeight()-(panelY+panelAlto)+8f;
+        tablaEnc.add(new Label("Flow Free",skin)).colspan(3).center().padTop(margenArriba).height(ALTO_ENC);
         escenario.addActor(tablaEnc);
         Table tablaHUD=new Table();
-        tablaHUD.setPosition(panelX,panelY);
-        tablaHUD.setSize(panelAncho,ALTO_HUD);
-        tablaHUD.pad(6);
+        tablaHUD.setFillParent(true);
+        tablaHUD.bottom().padBottom(panelY+6f).padLeft(panelX+10f).padRight(panelX+10f);
         labelNivel=new Label("Nivel "+numNivelInicial,skin);
         labelTimer=new Label("00:00",skin);
         labelMov=new Label("Mov: 0",skin);
         labelFails=new Label("Fallos: 0",skin);
         labelMsj=new Label("",skin);
         TextButton btnSalir=new TextButton("Menu",skin);
-        tablaHUD.add(new Label(usuarioAct.getUsername(),skin)).left().expandX().padRight(14);
-        tablaHUD.add(labelNivel).padRight(14);
-        tablaHUD.add(labelTimer).padRight(14);
-        tablaHUD.add(labelMov).padRight(14);
-        tablaHUD.add(labelFails).padRight(14);
-        tablaHUD.add(btnSalir).width(66).height(28).row();
-        tablaHUD.add(labelMsj).colspan(6).center().padTop(4);
+        Table tablaCentro=new Table();
+        tablaCentro.add(labelNivel).padRight(16);
+        tablaCentro.add(labelTimer).padRight(16);
+        tablaCentro.add(labelMov).padRight(16);
+        tablaCentro.add(labelFails);
+        tablaHUD.add(new Label(usuarioAct.getUsername(),skin)).left().expandX();
+        tablaHUD.add(tablaCentro).center().expandX();
+        tablaHUD.add(btnSalir).right().width(70).height(28).expandX();
+        tablaHUD.row();
+        tablaHUD.add(labelMsj).colspan(3).center().padTop(2);
         escenario.addActor(tablaHUD);
         btnSalir.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
@@ -171,7 +181,9 @@ public class PantallaJuego implements Screen{
     }
     private void dibujarTablero(){
         Tablero tablero=flowfree.getTablero();
-        if(tablero==null) return;
+        if(tablero==null){
+            return;
+        }
         dibujador.begin(ShapeRenderer.ShapeType.Filled);
         dibujarFondoCeldas(tablero);
         dibujarCaminos(tablero);
@@ -180,7 +192,7 @@ public class PantallaJuego implements Screen{
         dibujador.begin(ShapeRenderer.ShapeType.Filled);
         dibujarPuntosOrigen(tablero);
         dibujador.end();
-    }
+}
     private void dibujarFondoCeldas(Tablero tablero){
         Color fondoCelda=new Color(0.20f,0.08f,0.38f,1f);
         for(int fila=0;fila<tablero.getFilas();fila++){
@@ -255,6 +267,7 @@ public class PantallaJuego implements Screen{
             if(Gdx.input.justTouched()){
                 ultimaFilaArrastre=fila;
                 ultimaColArrastre=columna;
+                flowfree.resetUltimoTrazoCerrado();
                 flowfree.iniciarTrazo(fila,columna);
             }else{
                 if(fila!=ultimaFilaArrastre||columna!=ultimaColArrastre){
@@ -271,10 +284,18 @@ public class PantallaJuego implements Screen{
             }
         }
     }
-    private float celdaX(int columna){return origenX+columna*tamCelda;}
-    private float celdaY(Tablero tablero,int fila){return origenY+(tablero.getFilas()-1-fila)*tamCelda;}
-    private int pantallaAFila(float pixelY){return flowfree.getTablero().getFilas()-1-(int)((pixelY-origenY)/tamCelda);}
-    private int pantallaAColumna(float pixelX){return (int)((pixelX-origenX)/tamCelda);}
+    private float celdaX(int columna){
+        return origenX+columna*tamCelda;
+    }
+    private float celdaY(Tablero tablero,int fila){
+        return origenY+(tablero.getFilas()-1-fila)*tamCelda;
+    }
+    private int pantallaAFila(float pixelY){
+        return flowfree.getTablero().getFilas()-1-(int)((pixelY-origenY)/tamCelda);
+    }
+    private int pantallaAColumna(float pixelX){
+        return (int)((pixelX-origenX)/tamCelda);
+    }
     private void actualizarTimer(float delta){
         if(!flowfree.isEnPausa()&&!flowfree.isNivelCompleto()) tiempoAcum+=delta;
     }

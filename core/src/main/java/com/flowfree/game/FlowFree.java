@@ -21,6 +21,8 @@ public class FlowFree extends Juego {
     private int movimientos;
     private int fallos;
     private boolean nivelCompleto;
+    
+    private boolean ultimoTrazoCerrado=false;
 
     public FlowFree() {
         super("Flow Free");
@@ -75,13 +77,17 @@ public class FlowFree extends Juego {
         }
     }
 
-    public boolean continuarTrazo(int fila, int columna) {
-        if (enPausa || nivelCompleto){
-            return false;
+    public boolean continuarTrazo(int fila,int columna){
+        if(enPausa||nivelCompleto) return false;
+        boolean exito=gestorMovimientos.continuarTrazo(fila,columna);
+        if(exito) movimientos++;
+        if(gestorMovimientos.getUltimoResultado()==GestorMovimientos.ResultadoTrazo.BLOQUEADO){
+            fallos++;
         }
-        boolean exito = gestorMovimientos.continuarTrazo(fila, columna);
-        if (exito){
-            movimientos++;
+        if(gestorMovimientos.isTrazoCerrado()){
+            ultimoTrazoCerrado=true;
+            gestorMovimientos.terminarTrazo();
+            verificarEstadoNivel();
         }
         return exito;
     }
@@ -155,5 +161,11 @@ public class FlowFree extends Juego {
     }
     public GestorMovimientos getGestorMovimientos() { 
         return gestorMovimientos; 
+    }
+    public boolean isUltimoTrazoCerrado(){
+        return ultimoTrazoCerrado;
+    }
+    public void resetUltimoTrazoCerrado(){
+        ultimoTrazoCerrado=false;
     }
 }

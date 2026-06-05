@@ -14,15 +14,22 @@ import java.util.List;
  * @author mjosu
  */
 public class GestorMovimientos {
+    public enum ResultadoTrazo{
+        AVANZO, RETROCEDIO, CERRADO, BLOQUEADO, IGNORADO
+    }
     private Tablero tablero;
     private List<int[]> caminoActivo;
     private int colorActivo;
     private boolean trazando;
+    private boolean trazoCerrado;
+    private ResultadoTrazo ultimoResultado;
     public GestorMovimientos(Tablero tablero){
         this.tablero=tablero;
         this.caminoActivo=new ArrayList<>();
         this.colorActivo=0;
         this.trazando=false;
+        this.trazoCerrado=false;
+        this.ultimoResultado=ResultadoTrazo.IGNORADO;
     }
     public boolean iniciarTrazo(int fila,int columna){
         if(!tablero.dentroDelTablero(fila,columna)) return false;
@@ -32,37 +39,58 @@ public class GestorMovimientos {
         caminoActivo.clear();
         caminoActivo.add(new int[]{fila,columna});
         trazando=true;
+        trazoCerrado=false;
+        ultimoResultado=ResultadoTrazo.IGNORADO;
         return true;
     }
     public boolean continuarTrazo(int fila,int columna){
-        if(!trazando) return false;
-        if(!tablero.dentroDelTablero(fila,columna)) return false;
+        if(!trazando){
+            ultimoResultado=ResultadoTrazo.IGNORADO;
+            return false;
+        }
+        if(!tablero.dentroDelTablero(fila,columna)){
+            ultimoResultado=ResultadoTrazo.IGNORADO;
+            return false;
+        }
         int[] celdaUltima=caminoActivo.get(caminoActivo.size()-1);
-        if(!sonAdyacentes(celdaUltima[0],celdaUltima[1],fila,columna)) return false;
+        if(!sonAdyacentes(celdaUltima[0],celdaUltima[1],fila,columna)){
+            ultimoResultado=ResultadoTrazo.IGNORADO;
+            return false;
+        }
         for(int posicion=0;posicion<caminoActivo.size();posicion++){
             int[] celdaEnCamino=caminoActivo.get(posicion);
             if(celdaEnCamino[0]==fila&&celdaEnCamino[1]==columna){
                 retrocederHasta(posicion);
+                ultimoResultado=ResultadoTrazo.RETROCEDIO;
                 return true;
             }
         }
         if(!tablero.isVacia(fila,columna)){
             boolean esPuntoDelMismoColor=tablero.isPuntoOrigen(fila,columna)
                     &&tablero.getColor(fila,columna)==colorActivo;
-            if(!esPuntoDelMismoColor) return false;
+            if(!esPuntoDelMismoColor){
+                ultimoResultado=ResultadoTrazo.BLOQUEADO;
+                return false;
+            }
             conectarCeldas(celdaUltima[0],celdaUltima[1],fila,columna);
             caminoActivo.add(new int[]{fila,columna});
+            trazando=false;
+            trazoCerrado=true;
+            ultimoResultado=ResultadoTrazo.CERRADO;
             return true;
         }
         tablero.trazarCamino(fila,columna,colorActivo);
         conectarCeldas(celdaUltima[0],celdaUltima[1],fila,columna);
         caminoActivo.add(new int[]{fila,columna});
+        ultimoResultado=ResultadoTrazo.AVANZO;
         return true;
     }
     public void terminarTrazo(){
         trazando=false;
+        trazoCerrado=false;
         colorActivo=0;
         caminoActivo.clear();
+        ultimoResultado=ResultadoTrazo.IGNORADO;
     }
     private void conectarCeldas(int filaA,int colA,int filaB,int colB){
         if(filaB==filaA-1){
@@ -98,6 +126,10 @@ public class GestorMovimientos {
             tablero.borrarCelda(celda[0],celda[1]);
             caminoActivo.remove(ultimoIndice);
         }
+        if(caminoActivo.size()==1){
+            int[] origen=caminoActivo.get(0);
+            tablero.limpiarConexiones(origen[0],origen[1]);
+        }
     }
     private void desconectarCeldas(int filaA,int colA,int filaB,int colB){
         if(filaB==filaA-1){
@@ -117,7 +149,19 @@ public class GestorMovimientos {
     private boolean sonAdyacentes(int fila1,int columna1,int fila2,int columna2){
         return(Math.abs(fila1-fila2)+Math.abs(columna1-columna2))==1;
     }
-    public boolean isTrazando(){return trazando;}
-    public int getColorActivo(){return colorActivo;}
-    public Tablero getTablero(){return tablero;}
+    public boolean isTrazando(){
+        return trazando;
+    }
+    public boolean isTrazoCerrado(){
+        return trazoCerrado;
+    }
+    public int getColorActivo(){
+        return colorActivo;
+    }
+    public Tablero getTablero(){
+        return tablero;
+    }
+    public ResultadoTrazo getUltimoResultado(){
+        return ultimoResultado;
+    }
 }
