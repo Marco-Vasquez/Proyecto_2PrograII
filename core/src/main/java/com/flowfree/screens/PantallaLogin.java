@@ -53,11 +53,11 @@ public class PantallaLogin implements Screen {
     private static final float ALTO_CAMPO  = 36f;
     private static final float ANCHO_PANEL = 420f;
 
-    public PantallaLogin(FlowFreeGame juego) {
-        this.juego = juego;
-        this.gestorUsuarios = new GestorUsuarios();
-        this.modoRegistro = false;
-        this.passwordVisible = false;
+    public PantallaLogin(FlowFreeGame juego, boolean iniciarEnRegistro){
+    this.juego=juego;
+    this.gestorUsuarios=new GestorUsuarios();
+    this.modoRegistro=iniciarEnRegistro;
+    this.passwordVisible=false;
     }
 
     @Override
