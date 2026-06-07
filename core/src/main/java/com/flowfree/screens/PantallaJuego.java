@@ -161,7 +161,7 @@ public class PantallaJuego implements Screen{
         escenario.addActor(tablaHUD);
         btnSalir.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
-                Gdx.app.log("PantallaJuego","Volver al menu");
+                juego.setScreen(new PantallaMenu(juego,usuarioAct));
             }
         });
     }

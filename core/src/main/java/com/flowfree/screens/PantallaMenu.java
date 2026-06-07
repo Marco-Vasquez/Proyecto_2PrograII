@@ -26,6 +26,9 @@ public class PantallaMenu implements Screen{
     private Skin skin;
     private ShapeRenderer dibujador;
     private float panelX,panelY,panelAncho,panelAlto;
+    private static final float ENC_ALTO=52f;
+    private static final float ENC_MARGEN_TOP=14f;
+    private static final float RADIO_CIRC=20f;
     public PantallaMenu(FlowFreeGame juego,Usuario usuarioAct){
         this.juego=juego;
         this.usuarioAct=usuarioAct;
@@ -65,8 +68,8 @@ public class PantallaMenu implements Screen{
     private void calcularPanel(){
         float anchoTotal=Gdx.graphics.getWidth();
         float altoTotal=Gdx.graphics.getHeight();
-        panelAncho=anchoTotal*EstiloUI.PANEL_ANCHO_FRAC;
-        panelAlto=altoTotal*EstiloUI.PANEL_ALTO_FRAC;
+        panelAncho=anchoTotal*0.78f;
+        panelAlto=altoTotal*0.86f;
         panelX=(anchoTotal-panelAncho)/2f;
         panelY=(altoTotal-panelAlto)/2f;
     }
@@ -74,61 +77,63 @@ public class PantallaMenu implements Screen{
         dibujador.begin(ShapeRenderer.ShapeType.Filled);
         dibujador.setColor(EstiloUI.PANEL);
         dibujador.rect(panelX,panelY,panelAncho,panelAlto);
-        float encAncho=panelAncho*0.72f;
-        float encAlto=54f;
+        float encAncho=panelAncho*0.68f;
         float encX=panelX+(panelAncho-encAncho)/2f;
-        float encY=panelY+panelAlto-encAlto-14f;
+        float encY=panelY+panelAlto-ENC_ALTO-ENC_MARGEN_TOP;
         dibujador.setColor(EstiloUI.ENCABEZADO);
-        dibujador.rect(encX,encY,encAncho,encAlto);
-        float radioCirc=EstiloUI.RADIO_CIRCULO_DEC;
-        float paso=panelAlto*0.14f;
-        for(int posicion=0;posicion<5;posicion++){
-            float circY=panelY+panelAlto*0.15f+posicion*paso;
+        dibujador.rect(encX,encY,encAncho,ENC_ALTO);
+        float zonaCircX_izq=panelX+RADIO_CIRC+10f;
+        float zonaCircX_der=panelX+panelAncho-RADIO_CIRC-10f;
+        float zonaCircBase=panelY+panelAlto*0.16f;
+        float paso=panelAlto*0.20f;
+        for(int posicion=0;posicion<3;posicion++){
+            float circY=zonaCircBase+posicion*paso;
             dibujador.setColor(EstiloUI.CIRCULOS_IZQ[posicion%EstiloUI.CIRCULOS_IZQ.length]);
-            dibujador.circle(panelX-radioCirc*0.4f,circY,radioCirc,28);
+            dibujador.circle(zonaCircX_izq,circY,RADIO_CIRC,28);
             dibujador.setColor(EstiloUI.CIRCULOS_DER[posicion%EstiloUI.CIRCULOS_DER.length]);
-            dibujador.circle(panelX+panelAncho-radioCirc*1.6f,circY,radioCirc,28);
+            dibujador.circle(zonaCircX_der,circY,RADIO_CIRC,28);
         }
         dibujador.end();
     }
     private void construirUI(){
-        float altoTotal=Gdx.graphics.getHeight();
-        float encAlto=54f;
-        float margenArriba=altoTotal-(panelY+panelAlto)+14f;
+        float encAncho=panelAncho*0.68f;
+        float encX=panelX+(panelAncho-encAncho)/2f;
+        float encY=panelY+panelAlto-ENC_ALTO-ENC_MARGEN_TOP;
         Table tablaEnc=new Table();
-        tablaEnc.setFillParent(true);
-        tablaEnc.top();
-        tablaEnc.add(new Label("Flow Free",skin)).center().padTop(margenArriba).height(encAlto);
+        tablaEnc.setPosition(encX,encY);
+        tablaEnc.setSize(encAncho,ENC_ALTO);
+        tablaEnc.add(new Label("Flow Free",skin)).center().expand();
         escenario.addActor(tablaEnc);
-        Table tablaBotones=new Table();
-        tablaBotones.setFillParent(true);
-        tablaBotones.center();
-        float anchoBTN=panelAncho*0.55f;
-        float altoBTN=42f;
-        float sepBTN=12f;
+        float anchoBTN=panelAncho*0.52f;
+        float altoBTN=38f;
+        float sepBTN=8f;
+        Table tablaRaiz=new Table();
+        tablaRaiz.setFillParent(true);
+        tablaRaiz.center();
+        tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+16f).row();
         TextButton btnJugar=new TextButton("Jugar",skin);
         TextButton btnNiveles=new TextButton("Niveles",skin);
         TextButton btnPerfil=new TextButton("Perfil",skin);
         TextButton btnEstadisticas=new TextButton("Estadisticas",skin);
         TextButton btnAmigos=new TextButton("Amigos",skin);
         TextButton btnConfiguraciones=new TextButton("Configuraciones",skin);
-        TextButton btnSalir=new TextButton("Cerrar Sesion",skin);
-        tablaBotones.add(btnJugar).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
-        tablaBotones.add(btnNiveles).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
-        tablaBotones.add(btnPerfil).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
-        tablaBotones.add(btnEstadisticas).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
-        tablaBotones.add(btnAmigos).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
-        tablaBotones.add(btnConfiguraciones).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
-        tablaBotones.add(btnSalir).width(anchoBTN).height(altoBTN).row();
-        escenario.addActor(tablaBotones);
+        TextButton btnCerrarSesion=new TextButton("Cerrar sesion",skin);
+        tablaRaiz.add(btnJugar).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
+        tablaRaiz.add(btnNiveles).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
+        tablaRaiz.add(btnPerfil).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
+        tablaRaiz.add(btnEstadisticas).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
+        tablaRaiz.add(btnAmigos).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
+        tablaRaiz.add(btnConfiguraciones).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
+        tablaRaiz.add(btnCerrarSesion).width(anchoBTN).height(altoBTN).row();
+        escenario.addActor(tablaRaiz);
         btnJugar.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
-                //juego.setScreen(new PantallaNiveles(juego,usuarioAct));
+                juego.setScreen(new PantallaNiveles(juego,usuarioAct));
             }
         });
         btnNiveles.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
-                //juego.setScreen(new PantallaNiveles(juego,usuarioAct));
+                juego.setScreen(new PantallaNiveles(juego,usuarioAct));
             }
         });
         btnPerfil.addListener(new ChangeListener(){
@@ -151,10 +156,10 @@ public class PantallaMenu implements Screen{
                 Gdx.app.log("PantallaMenu","Configuraciones - proximamente");
             }
         });
-        btnSalir.addListener(new ChangeListener(){
-    		public void changed(ChangeEvent evento,Actor actor){
-        		juego.setScreen(new PantallaInicio(juego));
-    		}
-	});
+        btnCerrarSesion.addListener(new ChangeListener(){
+            public void changed(ChangeEvent evento,Actor actor){
+                juego.setScreen(new PantallaInicio(juego));
+            }
+        });
     }
 }

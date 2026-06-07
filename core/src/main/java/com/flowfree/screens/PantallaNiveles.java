@@ -3,9 +3,9 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.flowfree.screens;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Actor;
@@ -14,25 +14,33 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.flowfree.FlowFreeGame;
+import com.flowfree.game.GestorNiveles;
+import com.flowfree.model.Nivel;
+import com.flowfree.model.Usuario;
 /**
  *
- * @author mjosu
+ * @author andres
  */
-public class PantallaInicio implements Screen{
+public class PantallaNiveles implements Screen{
     private final FlowFreeGame juego;
+    private final Usuario usuarioAct;
     private Stage escenario;
     private Skin skin;
     private ShapeRenderer dibujador;
+    private GestorNiveles gestorNiveles;
     private float panelX,panelY,panelAncho,panelAlto;
     private static final float ENC_ALTO=52f;
     private static final float ENC_MARGEN_TOP=14f;
-    private static final float RADIO_CIRC=22f;
-    public PantallaInicio(FlowFreeGame juego){
+    private static final float RADIO_CIRC=20f;
+    public PantallaNiveles(FlowFreeGame juego,Usuario usuarioAct){
         this.juego=juego;
+        this.usuarioAct=usuarioAct;
     }
     public void show(){
         skin=new Skin(Gdx.files.internal("ui/uiskin.json"));
         dibujador=new ShapeRenderer();
+        gestorNiveles=new GestorNiveles();
+        gestorNiveles.aplicarProgresoUsuario(usuarioAct.getNivelDesbloqueado());
         construirEscenario();
     }
     public void render(float delta){
@@ -44,18 +52,24 @@ public class PantallaInicio implements Screen{
         escenario.draw();
     }
     public void resize(int ancho,int alto){
-        if(escenario!=null) escenario.dispose();
+        if(escenario!=null){
+            escenario.dispose();
+        }
         construirEscenario();
     }
     public void pause(){}
     public void resume(){}
-    public void hide(){dispose();}
+    public void hide(){
+        dispose();
+    }
     public void dispose(){
-        if(escenario!=null) escenario.dispose();
+        if(escenario!=null){
+            escenario.dispose();
+        }
         skin.dispose();
         dibujador.dispose();
     }
-    private void construirEscenario(){
+    public void construirEscenario(){
         escenario=new Stage(new ScreenViewport());
         escenario.getViewport().update(Gdx.graphics.getWidth(),Gdx.graphics.getHeight(),true);
         Gdx.input.setInputProcessor(escenario);
@@ -63,8 +77,9 @@ public class PantallaInicio implements Screen{
         construirUI();
     }
     private void calcularPanel(){
-        float anchoTotal=Gdx.graphics.getWidth();
-        float altoTotal=Gdx.graphics.getHeight();
+        float anchoTotal,altoTotal;
+        anchoTotal=Gdx.graphics.getWidth();
+        altoTotal=Gdx.graphics.getHeight();
         panelAncho=anchoTotal*0.78f;
         panelAlto=altoTotal*0.86f;
         panelX=(anchoTotal-panelAncho)/2f;
@@ -79,10 +94,10 @@ public class PantallaInicio implements Screen{
         float encY=panelY+panelAlto-ENC_ALTO-ENC_MARGEN_TOP;
         dibujador.setColor(EstiloUI.ENCABEZADO);
         dibujador.rect(encX,encY,encAncho,ENC_ALTO);
-        float zonaCircX_izq=panelX+RADIO_CIRC+8f;
-        float zonaCircX_der=panelX+panelAncho-RADIO_CIRC-8f;
-        float zonaCircBase=panelY+panelAlto*0.20f;
-        float paso=panelAlto*0.18f;
+        float zonaCircX_izq=panelX+RADIO_CIRC+10f;
+        float zonaCircX_der=panelX+panelAncho-RADIO_CIRC-10f;
+        float zonaCircBase=panelY+panelAlto*0.16f;
+        float paso=panelAlto*0.20f;
         for(int posicion=0;posicion<3;posicion++){
             float circY=zonaCircBase+posicion*paso;
             dibujador.setColor(EstiloUI.CIRCULOS_IZQ[posicion%EstiloUI.CIRCULOS_IZQ.length]);
@@ -101,33 +116,46 @@ public class PantallaInicio implements Screen{
         tablaEnc.setSize(encAncho,ENC_ALTO);
         tablaEnc.add(new Label("Flow Free",skin)).center().expand();
         escenario.addActor(tablaEnc);
-        float anchoBTN=panelAncho*0.50f;
+        float anchoBTN=panelAncho*0.52f;
+        float altoBTN=42f;
+        float sepBTN=10f;
+        Nivel[] todosLosNiveles=gestorNiveles.getTodosLosNiveles();
         Table tablaRaiz=new Table();
         tablaRaiz.setFillParent(true);
         tablaRaiz.center();
-        tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+20f).row();
-        TextButton btnLogin=new TextButton("Iniciar Sesion",skin);
-        TextButton btnRegistro=new TextButton("Crear cuenta",skin);
-        TextButton btnSalir=new TextButton("Salir",skin);
-        tablaRaiz.add(btnLogin).width(anchoBTN).height(46f).padBottom(14f).row();
-        tablaRaiz.add(btnRegistro).width(anchoBTN).height(46f).padBottom(14f).row();
-        tablaRaiz.add(btnSalir).width(anchoBTN).height(46f).padBottom(24f).row();
-        tablaRaiz.add(new Label("Conecta todos los puntos y completa cada nivel",skin)).center();
+        tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+10f).row();
+        for(int posicion=0;posicion<todosLosNiveles.length;posicion++){
+            Nivel nivel=todosLosNiveles[posicion];
+            String textoBoton="Nivel "+nivel.getNumNivel()+" - "+nivel.getDificultad();
+            TextButton botonNivel=new TextButton(textoBoton,skin);
+            if(!nivel.isDesbloqueado()){
+                botonNivel.setColor(new Color(0.5f,0.5f,0.5f,1f));
+            }
+            boolean esUltimo=(posicion==todosLosNiveles.length-1);
+            tablaRaiz.add(botonNivel).width(anchoBTN).height(altoBTN)
+                .padBottom(esUltimo ? 20f : sepBTN).row();
+            final int numNivel=nivel.getNumNivel();
+            final boolean desbloqueado=nivel.isDesbloqueado();
+            botonNivel.addListener(new ChangeListener(){
+                public void changed(ChangeEvent evento,Actor actor){
+                    if(desbloqueado){
+                        juego.setScreen(new PantallaJuego(juego,usuarioAct,numNivel));
+                    }
+                }
+            });
+        }
+        Label labelPista=new Label("Completa el nivel anterior para desbloquear el siguiente",skin);
+        labelPista.setWrap(true);
+        tablaRaiz.add(labelPista).width(anchoBTN).center().row();
+        tablaRaiz.add().height(14f).row();
+        TextButton btnVolver=new TextButton("Volver al menu",skin);
+        tablaRaiz.add(btnVolver).width(anchoBTN*0.7f).height(36f).row();
         escenario.addActor(tablaRaiz);
-        btnLogin.addListener(new ChangeListener(){
+        btnVolver.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
-                juego.setScreen(new PantallaLogin(juego,false));
-            }
-        });
-        btnRegistro.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
-                juego.setScreen(new PantallaLogin(juego,true));
-            }
-        });
-        btnSalir.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
-                Gdx.app.exit();
+                juego.setScreen(new PantallaMenu(juego,usuarioAct));
             }
         });
     }
 }
+
