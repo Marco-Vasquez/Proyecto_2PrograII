@@ -106,4 +106,28 @@ public class GestorUsuarios {
             throw new RuntimeException("No se pudo guardar el usuario",error);
         }
     }
+    
+    public java.util.List<String> listarUsuariosRegistrados(){
+        java.util.List<String> lista=new java.util.ArrayList<>();
+        java.io.File carpeta=new java.io.File(CARPETA_DATOS);
+        
+        if(!carpeta.exists()||!carpeta.isDirectory()){
+            return lista;
+        }
+        for(java.io.File subcarpeta:carpeta.listFiles()){
+            if(subcarpeta.isDirectory()){
+                lista.add(subcarpeta.getName());
+            }
+        }
+        return lista;
+    }
+
+    public int getPuntuacionDeUsuario(String username){
+        Usuario usuario=cargarUser(username);
+        if(usuario==null){
+            return 0;
+        }
+        return usuario.getEstadisticas().getPuntuacionGeneral();
+    }
+    
 }
