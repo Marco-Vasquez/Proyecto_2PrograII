@@ -128,9 +128,18 @@ public class PantallaNiveles implements Screen{
             Nivel nivel=todosLosNiveles[posicion];
             String textoBoton="Nivel "+nivel.getNumNivel()+" - "+nivel.getDificultad();
             TextButton botonNivel=new TextButton(textoBoton,skin);
-            if(!nivel.isDesbloqueado()){
-                botonNivel.setColor(new Color(0.5f,0.5f,0.5f,1f));
-            }
+            final Color colorFijo=nivel.isDesbloqueado()
+                ? new Color(EstiloUI.BTN_VERDE)
+                : new Color(0.45f,0.45f,0.45f,1f);
+            botonNivel.setColor(colorFijo);
+            botonNivel.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener(){
+                public void enter(com.badlogic.gdx.scenes.scene2d.InputEvent e,float x,float y,int p,Actor from){
+                    botonNivel.setColor(colorFijo);
+                }
+                public void exit(com.badlogic.gdx.scenes.scene2d.InputEvent e,float x,float y,int p,Actor to){
+                    botonNivel.setColor(colorFijo);
+                }
+            });
             boolean esUltimo=(posicion==todosLosNiveles.length-1);
             tablaRaiz.add(botonNivel).width(anchoBTN).height(altoBTN)
                 .padBottom(esUltimo ? 20f : sepBTN).row();

@@ -32,17 +32,17 @@ public class PantallaEstadisticas implements Screen{
     private static final float ENC_ALTO=52f;
     private static final float ENC_MARGEN_TOP=14f;
     private static final float RADIO_CIRC=20f;
+    private static final float ANCHO_ETIQUETA=180f;
+    private static final float ANCHO_VALOR=120f;
     public PantallaEstadisticas(FlowFreeGame juego,Usuario usuarioAct){
         this.juego=juego;
         this.usuarioAct=usuarioAct;
     }
-    
     public void show(){
         skin=new Skin(Gdx.files.internal("ui/uiskin.json"));
         dibujador=new ShapeRenderer();
         construirEscenario();
     }
-    
     public void render(float delta){
         Gdx.gl.glClearColor(EstiloUI.FONDO.r,EstiloUI.FONDO.g,EstiloUI.FONDO.b,1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
@@ -51,12 +51,10 @@ public class PantallaEstadisticas implements Screen{
         escenario.act(delta);
         escenario.draw();
     }
-    
     public void resize(int ancho,int alto){
         if(escenario!=null) escenario.dispose();
         construirEscenario();
     }
-    
     public void pause(){}
     public void resume(){}
     public void hide(){dispose();}
@@ -65,7 +63,6 @@ public class PantallaEstadisticas implements Screen{
         skin.dispose();
         dibujador.dispose();
     }
-    
     private void construirEscenario(){
         escenario=new Stage(new ScreenViewport());
         escenario.getViewport().update(Gdx.graphics.getWidth(),Gdx.graphics.getHeight(),true);
@@ -73,7 +70,6 @@ public class PantallaEstadisticas implements Screen{
         calcularPanel();
         construirUI();
     }
-    
     private void calcularPanel(){
         float anchoTotal=Gdx.graphics.getWidth();
         float altoTotal=Gdx.graphics.getHeight();
@@ -82,7 +78,6 @@ public class PantallaEstadisticas implements Screen{
         panelX=(anchoTotal-panelAncho)/2f;
         panelY=(altoTotal-panelAlto)/2f;
     }
-    
     private void dibujarFondo(){
         dibujador.begin(ShapeRenderer.ShapeType.Filled);
         dibujador.setColor(EstiloUI.PANEL);
@@ -105,7 +100,6 @@ public class PantallaEstadisticas implements Screen{
         }
         dibujador.end();
     }
-    
     private void construirUI(){
         float encAncho=panelAncho*0.68f;
         float encX=panelX+(panelAncho-encAncho)/2f;
@@ -116,34 +110,39 @@ public class PantallaEstadisticas implements Screen{
         tablaEnc.add(new Label("Flow Free",skin)).center().expand();
         escenario.addActor(tablaEnc);
         Estadisticas stats=usuarioAct.getEstadisticas();
-        int segundosTotales=(int)stats.getTiempoTotalSeg();
-        int minutos=segundosTotales/60;
-        int segundos=segundosTotales%60;
+        long segTotales=stats.getTiempoTotalSeg();
         double promedio=stats.getTiempoPromedioPorNivel();
-        int promedioMin=(int)(promedio/60);
-        int promedioSeg=(int)(promedio%60);
         Table tablaContenido=new Table();
-        tablaContenido.pad(12f);
+        tablaContenido.pad(12f).left();
         agregarFila(tablaContenido,"Usuario:",usuarioAct.getUsername());
         agregarFila(tablaContenido,"Partidas jugadas:",""+stats.getPartidasJugadas());
         agregarFila(tablaContenido,"Niveles completados:",""+stats.getNivelesCompletados());
-        agregarFila(tablaContenido,"Tiempo total:",String.format("%02d:%02d",minutos,segundos));
-        agregarFila(tablaContenido,"Tiempo promedio:",String.format("%02d:%02d",promedioMin,promedioSeg));
+        agregarFila(tablaContenido,"Tiempo total:",formatTiempo(segTotales));
+        agregarFila(tablaContenido,"Tiempo promedio:",formatTiempo((long)promedio));
         agregarFila(tablaContenido,"Movimientos totales:",""+stats.getTotalMovimientos());
         agregarFila(tablaContenido,"Fallos totales:",""+stats.getTotalFallos());
         agregarFila(tablaContenido,"Puntuacion general:",""+stats.getPuntuacionGeneral());
-        tablaContenido.add(new Label("Historial de partidas:",skin)).left().padTop(14f).padBottom(4f).colspan(2).row();
+        tablaContenido.add(new Label("Historial de partidas:",skin))
+            .left().padTop(14f).padBottom(6f).colspan(4).row();
         List<String> historial=stats.getHistorial();
-        
         if(historial.isEmpty()){
-            tablaContenido.add(new Label("Sin partidas registradas",skin)).colspan(2).center().row();
+            tablaContenido.add(new Label("Sin partidas registradas",skin)).colspan(4).center().row();
         }else{
+            tablaContenido.add(new Label("Nivel",skin)).width(50f).left().padBottom(4f);
+            tablaContenido.add(new Label("Tiempo",skin)).width(70f).left().padBottom(4f);
+            tablaContenido.add(new Label("Mov",skin)).width(50f).left().padBottom(4f);
+            tablaContenido.add(new Label("Fallos",skin)).width(55f).left().padBottom(4f);
+            tablaContenido.add(new Label("Pts",skin)).width(55f).left().padBottom(4f).row();
             int inicio=Math.max(0,historial.size()-5);
             for(int posicion=inicio;posicion<historial.size();posicion++){
-                tablaContenido.add(new Label(historial.get(posicion),skin)).colspan(2).left().padBottom(2f).row();
+                String[] partes=parsearHistorial(historial.get(posicion));
+                tablaContenido.add(new Label(partes[0],skin)).width(50f).left().padBottom(3f);
+                tablaContenido.add(new Label(partes[1],skin)).width(70f).left().padBottom(3f);
+                tablaContenido.add(new Label(partes[2],skin)).width(50f).left().padBottom(3f);
+                tablaContenido.add(new Label(partes[3],skin)).width(55f).left().padBottom(3f);
+                tablaContenido.add(new Label(partes[4],skin)).width(55f).left().padBottom(3f).row();
             }
         }
-        
         construirRankingAmigos(tablaContenido);
         ScrollPane scroll=new ScrollPane(tablaContenido,skin);
         scroll.setFadeScrollBars(true);
@@ -153,9 +152,10 @@ public class PantallaEstadisticas implements Screen{
         tablaRaiz.setFillParent(true);
         tablaRaiz.center();
         tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+8f).row();
-        tablaRaiz.add(scroll).width(panelAncho*0.80f).maxHeight(altoTotal*0.62f).row();
+        tablaRaiz.add(scroll).width(panelAncho*0.82f).maxHeight(altoTotal*0.62f).row();
         tablaRaiz.add().height(10f).row();
         TextButton btnVolver=new TextButton("Volver al menu",skin);
+        btnVolver.setColor(EstiloUI.BTN_AZUL);
         tablaRaiz.add(btnVolver).width(panelAncho*0.45f).height(36f).row();
         escenario.addActor(tablaRaiz);
         btnVolver.addListener(new ChangeListener(){
@@ -164,22 +164,38 @@ public class PantallaEstadisticas implements Screen{
             }
         });
     }
-    
     private void agregarFila(Table tabla,String etiqueta,String valor){
-        tabla.add(new Label(etiqueta,skin)).left().padRight(20f).padBottom(6f);
-        tabla.add(new Label(valor,skin)).left().padBottom(6f).row();
+        tabla.add(new Label(etiqueta,skin)).width(ANCHO_ETIQUETA).left().padBottom(6f);
+        tabla.add(new Label(valor,skin)).width(ANCHO_VALOR).left().padBottom(6f).colspan(3).row();
     }
-    
+    private String formatTiempo(long segundos){
+        return String.format("%02d:%02d",segundos/60,segundos%60);
+    }
+    private String[] parsearHistorial(String linea){
+        String[] resultado=new String[]{"?","?","?","?","?"};
+        try{
+            String[] partes=linea.split("\\|");
+            if(partes.length>=5){
+                resultado[0]=partes[0].replace("Nivel","").trim();
+                resultado[1]=partes[1].trim();
+                resultado[2]=partes[2].replace("Mov:","").trim();
+                resultado[3]=partes[3].replace("Fallos:","").trim();
+                resultado[4]=partes[4].replace("Pts:","").trim();
+            }
+        }catch(Exception ignored){}
+        return resultado;
+    }
     private void construirRankingAmigos(Table tabla){
         GestorUsuarios gestorUsuarios=new GestorUsuarios();
         List<String> amigos=usuarioAct.getAmigos();
         if(amigos.isEmpty()) return;
-        tabla.add(new Label("Ranking con amigos:",skin)).left().padTop(14f).padBottom(4f).colspan(2).row();
+        tabla.add(new Label("Ranking con amigos:",skin)).left().padTop(14f).padBottom(6f).colspan(4).row();
+        tabla.add(new Label("Usuario",skin)).width(ANCHO_ETIQUETA).left().padBottom(4f);
+        tabla.add(new Label("Puntuacion",skin)).width(ANCHO_VALOR).left().padBottom(4f).colspan(3).row();
         agregarFila(tabla,usuarioAct.getUsername()+" (tu)",""+usuarioAct.getEstadisticas().getPuntuacionGeneral());
         for(String usernameAmigo:amigos){
             int puntos=gestorUsuarios.getPuntuacionDeUsuario(usernameAmigo);
             agregarFila(tabla,usernameAmigo,""+puntos);
         }
     }
-    
 }

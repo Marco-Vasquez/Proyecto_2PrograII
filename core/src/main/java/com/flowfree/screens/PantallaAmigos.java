@@ -125,32 +125,58 @@ public class PantallaAmigos implements Screen{
         tablaEnc.setSize(encAncho,ENC_ALTO);
         tablaEnc.add(new Label("Flow Free",skin)).center().expand();
         escenario.addActor(tablaEnc);
+        java.util.List<String> todosLosUsuarios=gestorUsuarios.listarUsuariosRegistrados();
+        java.util.List<String> usuariosDisponibles=new java.util.ArrayList<>();
+        for(String nombre:todosLosUsuarios){
+            if(!nombre.equals(usuarioAct.getUsername())
+                    &&!usuarioAct.getAmigos().contains(nombre)){
+                usuariosDisponibles.add(nombre);
+            }
+        }
         Table tablaContenido=new Table();
         tablaContenido.pad(12f);
-        tablaContenido.add(new Label("Amigos",skin)).colspan(3).center().padBottom(14f).row();
-        tablaContenido.add(new Label("Agregar amigo por username:",skin)).colspan(3).left().padBottom(4f).row();
-        campoBusqueda=new TextField("",skin);
+        tablaContenido.add(new Label("Amigos",skin)).colspan(2).center().padBottom(14f).row();
         labelMensaje=new Label("",skin);
         TextButton btnAgregar=new TextButton("Agregar",skin);
-        tablaContenido.add(campoBusqueda).width(panelAncho*0.45f).height(36f).padRight(8f);
-        tablaContenido.add(btnAgregar).width(panelAncho*0.22f).height(36f).row();
-        tablaContenido.add(labelMensaje).colspan(3).left().padBottom(10f).row();
-        List<String> amigos=usuarioAct.getAmigos();
-        tablaContenido.add(new Label("Mis amigos:",skin)).colspan(3).left().padBottom(6f).row();
-        
-        if(amigos.isEmpty()){
-            tablaContenido.add(new Label("Todavia no tienes amigos agregados",skin)).colspan(3).left().padBottom(4f).row();
+        btnAgregar.setColor(EstiloUI.BTN_VERDE);
+        if(usuariosDisponibles.isEmpty()){
+            tablaContenido.add(new Label("No hay usuarios disponibles para agregar",skin)).colspan(2).left().padBottom(10f).row();
+        }else{
+            tablaContenido.add(new Label("Seleccionar usuario:",skin)).left().padBottom(4f);
+            tablaContenido.add().row();
+            com.badlogic.gdx.scenes.scene2d.ui.SelectBox<String> selectorUsuarios=
+                new com.badlogic.gdx.scenes.scene2d.ui.SelectBox<>(skin);
+            com.badlogic.gdx.utils.Array<String> itemsArray=new com.badlogic.gdx.utils.Array<>();
+            for(String nombre:usuariosDisponibles) itemsArray.add(nombre);
+            selectorUsuarios.setItems(itemsArray);
+            tablaContenido.add(selectorUsuarios).width(panelAncho*0.55f).height(36f).padBottom(6f).colspan(2).row();
+            tablaContenido.add(btnAgregar).width(panelAncho*0.45f).height(36f).colspan(2).padBottom(10f).row();
+            tablaContenido.add(labelMensaje).colspan(2).left().padBottom(10f).row();
+            btnAgregar.addListener(new ChangeListener(){
+                public void changed(ChangeEvent evento,Actor actor){
+                    String seleccionado=selectorUsuarios.getSelected();
+                    if(seleccionado==null){
+                        labelMensaje.setText("Selecciona un usuario");
+                        return;
+                    }
+                    usuarioAct.agregarAmigo(seleccionado);
+                    gestorUsuarios.guardarUser(usuarioAct);
+                    juego.setScreen(new PantallaAmigos(juego,usuarioAct));
+                }
+            });
         }
-        else{
+        java.util.List<String> amigos=usuarioAct.getAmigos();
+        tablaContenido.add(new Label("Mis amigos:",skin)).colspan(2).left().padBottom(6f).row();
+        if(amigos.isEmpty()){
+            tablaContenido.add(new Label("Todavia no tienes amigos agregados",skin)).colspan(2).left().padBottom(4f).row();
+        }else{
             tablaContenido.add(new Label("Usuario",skin)).left().padRight(30f).padBottom(4f);
             tablaContenido.add(new Label("Puntuacion",skin)).left().padBottom(4f).row();
-            
             for(String usernameAmigo:amigos){
                 int puntos=gestorUsuarios.getPuntuacionDeUsuario(usernameAmigo);
                 tablaContenido.add(new Label(usernameAmigo,skin)).left().padRight(30f).padBottom(4f);
                 tablaContenido.add(new Label(""+puntos,skin)).left().padBottom(4f).row();
             }
-            
         }
         ScrollPane scroll=new ScrollPane(tablaContenido,skin);
         scroll.setFadeScrollBars(true);
@@ -163,22 +189,14 @@ public class PantallaAmigos implements Screen{
         tablaRaiz.add(scroll).width(panelAncho*0.80f).maxHeight(altoTotal*0.62f).row();
         tablaRaiz.add().height(10f).row();
         TextButton btnVolver=new TextButton("Volver al menu",skin);
+        btnVolver.setColor(EstiloUI.BTN_AZUL);
         tablaRaiz.add(btnVolver).width(panelAncho*0.45f).height(36f).row();
         escenario.addActor(tablaRaiz);
-        btnAgregar.addListener(new ChangeListener(){
-            
-            public void changed(ChangeEvent evento,Actor actor){
-                intentarAgregarAmigo();
-            }
-            
-        });
-        
         btnVolver.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaMenu(juego,usuarioAct));
             }
         });
-        
     }
     
     private void intentarAgregarAmigo(){

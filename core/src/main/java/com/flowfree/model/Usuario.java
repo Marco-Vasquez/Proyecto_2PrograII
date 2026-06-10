@@ -107,4 +107,7 @@ public class Usuario implements Serializable{
         this.estadisticas = estadisticas; 
     }
     
+    public String toString(){
+        return "Usuario{username="+username+", nombre="+nombreCompleto+", registro="+fechaRegistro.toLocalDate()+", nivelDesbloqueado="+nivelDesbloqueado+", partidas="+estadisticas.getPartidasJugadas()+"}";
+    }
 }

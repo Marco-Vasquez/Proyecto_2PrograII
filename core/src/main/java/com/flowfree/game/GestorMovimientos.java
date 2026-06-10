@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class GestorMovimientos {
     public enum ResultadoTrazo{
-        AVANZO, RETROCEDIO, CERRADO, BLOQUEADO, IGNORADO
+        AVANZO,RETROCEDIO,CERRADO,BLOQUEADO,IGNORADO
     }
     private Tablero tablero;
     private List<int[]> caminoActivo;
@@ -23,6 +23,10 @@ public class GestorMovimientos {
     private boolean trazando;
     private boolean trazoCerrado;
     private ResultadoTrazo ultimoResultado;
+    private int colorPausado;
+    private List<int[]> caminoPausado;
+    private List<int[][]> historialTrazos;
+    private List<Integer> historialColores;
     public GestorMovimientos(Tablero tablero){
         this.tablero=tablero;
         this.caminoActivo=new ArrayList<>();
@@ -30,18 +34,68 @@ public class GestorMovimientos {
         this.trazando=false;
         this.trazoCerrado=false;
         this.ultimoResultado=ResultadoTrazo.IGNORADO;
+        this.colorPausado=0;
+        this.caminoPausado=new ArrayList<>();
+        this.historialTrazos=new ArrayList<>();
+        this.historialColores=new ArrayList<>();
     }
     public boolean iniciarTrazo(int fila,int columna){
         if(!tablero.dentroDelTablero(fila,columna)) return false;
-        if(!tablero.isPuntoOrigen(fila,columna)) return false;
-        limpiarCaminoDeColor(tablero.getColor(fila,columna));
-        colorActivo=tablero.getColor(fila,columna);
-        caminoActivo.clear();
-        caminoActivo.add(new int[]{fila,columna});
-        trazando=true;
-        trazoCerrado=false;
-        ultimoResultado=ResultadoTrazo.IGNORADO;
-        return true;
+        if(tablero.isPuntoOrigen(fila,columna)){
+            int color=tablero.getColor(fila,columna);
+            if(color==colorPausado&&!caminoPausado.isEmpty()){
+                colorActivo=color;
+                caminoActivo=new ArrayList<>(caminoPausado);
+                colorPausado=0;
+                caminoPausado.clear();
+                trazando=true;
+                trazoCerrado=false;
+                ultimoResultado=ResultadoTrazo.IGNORADO;
+                return true;
+            }
+            limpiarCaminoDeColor(color);
+            colorActivo=color;
+            caminoActivo.clear();
+            caminoActivo.add(new int[]{fila,columna});
+            trazando=true;
+            trazoCerrado=false;
+            colorPausado=0;
+            caminoPausado.clear();
+            ultimoResultado=ResultadoTrazo.IGNORADO;
+            return true;
+        }
+        if(tablero.getEstado(fila,columna)==EstadoCelda.CAMINO){
+            int color=tablero.getColor(fila,columna);
+            if(color==colorPausado&&!caminoPausado.isEmpty()){
+                int indiceCelda=-1;
+                for(int posicion=0;posicion<caminoPausado.size();posicion++){
+                    int[] celda=caminoPausado.get(posicion);
+                    if(celda[0]==fila&&celda[1]==columna){
+                        indiceCelda=posicion;
+                        break;
+                    }
+                }
+                if(indiceCelda>=0){
+                    colorActivo=color;
+                    caminoActivo=new ArrayList<>(caminoPausado.subList(0,indiceCelda+1));
+                    while(caminoPausado.size()-1>indiceCelda){
+                        int ultimoIdx=caminoPausado.size()-1;
+                        int[] celda=caminoPausado.get(ultimoIdx);
+                        int[] anterior=caminoPausado.get(ultimoIdx-1);
+                        desconectarCeldas(anterior[0],anterior[1],celda[0],celda[1]);
+                        tablero.borrarCelda(celda[0],celda[1]);
+                        caminoPausado.remove(ultimoIdx);
+                    }
+                    colorPausado=0;
+                    caminoPausado.clear();
+                    trazando=true;
+                    trazoCerrado=false;
+                    ultimoResultado=ResultadoTrazo.IGNORADO;
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     public boolean continuarTrazo(int fila,int columna){
         if(!trazando){
@@ -74,6 +128,7 @@ public class GestorMovimientos {
             }
             conectarCeldas(celdaUltima[0],celdaUltima[1],fila,columna);
             caminoActivo.add(new int[]{fila,columna});
+            guardarEnHistorial(colorActivo,caminoActivo);
             trazando=false;
             trazoCerrado=true;
             ultimoResultado=ResultadoTrazo.CERRADO;
@@ -85,12 +140,75 @@ public class GestorMovimientos {
         ultimoResultado=ResultadoTrazo.AVANZO;
         return true;
     }
+    private void guardarEnHistorial(int color,List<int[]> camino){
+        int[][] snapshot=new int[camino.size()][2];
+        for(int posicion=0;posicion<camino.size();posicion++){
+            snapshot[posicion][0]=camino.get(posicion)[0];
+            snapshot[posicion][1]=camino.get(posicion)[1];
+        }
+        historialTrazos.add(snapshot);
+        historialColores.add(color);
+    }
+    public boolean deshacerUltimoTrazoCompleto(){
+        if(historialTrazos.isEmpty()) return false;
+        int ultimoIdx=historialTrazos.size()-1;
+        int[][] caminoGuardado=historialTrazos.get(ultimoIdx);
+        historialTrazos.remove(ultimoIdx);
+        historialColores.remove(ultimoIdx);
+        for(int posicion=caminoGuardado.length-1;posicion>0;posicion--){
+            int filaA=caminoGuardado[posicion-1][0];
+            int colA=caminoGuardado[posicion-1][1];
+            int filaB=caminoGuardado[posicion][0];
+            int colB=caminoGuardado[posicion][1];
+            desconectarCeldas(filaA,colA,filaB,colB);
+            if(tablero.getEstado(filaB,colB)==EstadoCelda.CAMINO){
+                tablero.borrarCelda(filaB,colB);
+            }
+        }
+        int[] primeraCelda=caminoGuardado[0];
+        tablero.limpiarConexiones(primeraCelda[0],primeraCelda[1]);
+        return true;
+    }
+    public boolean deshacerUltimoPaso(){
+        if(caminoActivo.size()<=1) return false;
+        int ultimoIndice=caminoActivo.size()-1;
+        int[] celda=caminoActivo.get(ultimoIndice);
+        int[] anterior=caminoActivo.get(ultimoIndice-1);
+        desconectarCeldas(anterior[0],anterior[1],celda[0],celda[1]);
+        tablero.borrarCelda(celda[0],celda[1]);
+        caminoActivo.remove(ultimoIndice);
+        if(caminoActivo.size()==1){
+            int[] origen=caminoActivo.get(0);
+            tablero.limpiarConexiones(origen[0],origen[1]);
+        }
+        trazando=true;
+        return true;
+    }
+    public boolean hayHistorial(){
+        return!historialTrazos.isEmpty();
+    }
+    public void pausarTrazo(){
+        if(trazando&&!caminoActivo.isEmpty()){
+            colorPausado=colorActivo;
+            caminoPausado=new ArrayList<>(caminoActivo);
+        }
+        trazando=false;
+        colorActivo=0;
+        caminoActivo.clear();
+        ultimoResultado=ResultadoTrazo.IGNORADO;
+    }
     public void terminarTrazo(){
         trazando=false;
         trazoCerrado=false;
         colorActivo=0;
         caminoActivo.clear();
+        colorPausado=0;
+        caminoPausado.clear();
         ultimoResultado=ResultadoTrazo.IGNORADO;
+    }
+    public void limpiarHistorial(){
+        historialTrazos.clear();
+        historialColores.clear();
     }
     private void conectarCeldas(int filaA,int colA,int filaB,int colB){
         if(filaB==filaA-1){
@@ -110,9 +228,12 @@ public class GestorMovimientos {
     private void limpiarCaminoDeColor(int color){
         for(int fila=0;fila<tablero.getFilas();fila++){
             for(int columna=0;columna<tablero.getColumnas();columna++){
-                if(tablero.getColor(fila,columna)==color
-                        &&tablero.getEstado(fila,columna)==EstadoCelda.CAMINO){
-                    tablero.borrarCelda(fila,columna);
+                if(tablero.getColor(fila,columna)==color){
+                    if(tablero.getEstado(fila,columna)==EstadoCelda.CAMINO){
+                        tablero.borrarCelda(fila,columna);
+                    }else if(tablero.getEstado(fila,columna)==EstadoCelda.PUNTO_ORIGEN){
+                        tablero.limpiarConexiones(fila,columna);
+                    }
                 }
             }
         }
@@ -163,5 +284,11 @@ public class GestorMovimientos {
     }
     public ResultadoTrazo getUltimoResultado(){
         return ultimoResultado;
+    }
+    public int getColorPausado(){
+        return colorPausado;
+    }
+    public boolean hayTrazoPausado(){
+        return colorPausado!=0&&!caminoPausado.isEmpty();
     }
 }

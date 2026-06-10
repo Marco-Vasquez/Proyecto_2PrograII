@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.flowfree.FlowFreeGame;
+import com.flowfree.data.GestorUsuarios;
 import com.flowfree.game.FlowFree;
 import com.flowfree.game.GestorNiveles;
 import com.flowfree.model.EstadoCelda;
@@ -34,6 +35,7 @@ public class PantallaJuego implements Screen{
     private final int numNivelInicial;
     private FlowFree flowfree;
     private GestorNiveles gestorNiveles;
+    private GestorUsuarios gestorUsuarios;
     private Stage escenario;
     private Skin skin;
     private ShapeRenderer dibujador;
@@ -42,6 +44,9 @@ public class PantallaJuego implements Screen{
     private Label labelMov;
     private Label labelFails;
     private Label labelMsj;
+    private TextButton btnSiguiente;
+    private TextButton btnLimpiar;
+    private TextButton btnDeshacer;
     private float tiempoAcum;
     private float tamCelda;
     private float origenX;
@@ -52,7 +57,7 @@ public class PantallaJuego implements Screen{
     private float panelAlto;
     private int ultimaFilaArrastre=-1;
     private int ultimaColArrastre=-1;
-    private boolean trazoAvanzo=false;
+    private boolean victoriaRegistrada=false;
     public PantallaJuego(FlowFreeGame juego,Usuario usuarioAct,int numNivel){
         this.juego=juego;
         this.usuarioAct=usuarioAct;
@@ -61,6 +66,7 @@ public class PantallaJuego implements Screen{
     public void show(){
         skin=new Skin(Gdx.files.internal("ui/uiskin.json"));
         dibujador=new ShapeRenderer();
+        gestorUsuarios=new GestorUsuarios();
         gestorNiveles=new GestorNiveles();
         gestorNiveles.aplicarProgresoUsuario(usuarioAct.getNivelDesbloqueado());
         flowfree=new FlowFree();
@@ -70,6 +76,7 @@ public class PantallaJuego implements Screen{
     public void render(float delta){
         actualizarTimer(delta);
         procesarInput();
+        verificarYRegistrarVictoria();
         Gdx.gl.glClearColor(EstiloUI.FONDO.r,EstiloUI.FONDO.g,EstiloUI.FONDO.b,1f);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         dibujador.setProjectionMatrix(escenario.getViewport().getCamera().combined);
@@ -80,9 +87,7 @@ public class PantallaJuego implements Screen{
         actualizarHUD();
     }
     public void resize(int ancho,int alto){
-        if(escenario!=null){
-            escenario.dispose();
-        }
+        if(escenario!=null) escenario.dispose();
         construirEscenario();
     }
     public void pause(){}
@@ -118,8 +123,8 @@ public class PantallaJuego implements Screen{
         float anchoTablero=tamCelda*tablero.getColumnas();
         float altoTablero=tamCelda*tablero.getFilas();
         origenX=panelX+(panelAncho-anchoTablero)/2f;
-        float centroVerticalTablero=panelY+ALTO_HUD+MARGEN+(espacioV-altoTablero)/2f;
-        origenY=centroVerticalTablero;
+        float centroVertical=panelY+ALTO_HUD+MARGEN+(espacioV-altoTablero)/2f;
+        origenY=centroVertical;
     }
     private void dibujarFondo(){
         dibujador.begin(ShapeRenderer.ShapeType.Filled);
@@ -147,21 +152,61 @@ public class PantallaJuego implements Screen{
         labelMov=new Label("Mov: 0",skin);
         labelFails=new Label("Fallos: 0",skin);
         labelMsj=new Label("",skin);
-        TextButton btnSalir=new TextButton("Menu",skin);
+        TextButton btnMenu=new TextButton("Menu",skin);
+        btnLimpiar=new TextButton("Limpiar",skin);
+        btnDeshacer=new TextButton("Deshacer",skin);
+        btnSiguiente=new TextButton("Siguiente",skin);
+        btnSiguiente.setVisible(false);
+        btnLimpiar.setColor(EstiloUI.BTN_NARANJA);
+        btnDeshacer.setColor(EstiloUI.BTN_AMARILLO);
+        btnSiguiente.setColor(EstiloUI.BTN_VERDE);
         Table tablaCentro=new Table();
-        tablaCentro.add(labelNivel).padRight(16);
-        tablaCentro.add(labelTimer).padRight(16);
-        tablaCentro.add(labelMov).padRight(16);
+        tablaCentro.add(labelNivel).padRight(12);
+        tablaCentro.add(labelTimer).padRight(12);
+        tablaCentro.add(labelMov).padRight(12);
         tablaCentro.add(labelFails);
+        Table tablaBotones=new Table();
+        tablaBotones.add(btnDeshacer).width(76).height(28).padRight(4);
+        tablaBotones.add(btnLimpiar).width(70).height(28).padRight(4);
+        tablaBotones.add(btnSiguiente).width(78).height(28).padRight(4);
+        tablaBotones.add(btnMenu).width(58).height(28);
         tablaHUD.add(new Label(usuarioAct.getUsername(),skin)).left().expandX();
         tablaHUD.add(tablaCentro).center().expandX();
-        tablaHUD.add(btnSalir).right().width(70).height(28).expandX();
+        tablaHUD.add(tablaBotones).right().expandX();
         tablaHUD.row();
         tablaHUD.add(labelMsj).colspan(3).center().padTop(2);
         escenario.addActor(tablaHUD);
-        btnSalir.addListener(new ChangeListener(){
+        btnMenu.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaMenu(juego,usuarioAct));
+            }
+        });
+        btnLimpiar.addListener(new ChangeListener(){
+            public void changed(ChangeEvent evento,Actor actor){
+                if(flowfree.isNivelCompleto()) return;
+                flowfree.reiniciar();
+                tiempoAcum=0;
+                victoriaRegistrada=false;
+                labelMsj.setText("");
+                btnSiguiente.setVisible(false);
+                btnLimpiar.setDisabled(false);
+                btnDeshacer.setDisabled(false);
+                btnLimpiar.setColor(EstiloUI.BTN_NARANJA);
+                btnDeshacer.setColor(EstiloUI.BTN_AMARILLO);
+            }
+        });
+        btnDeshacer.addListener(new ChangeListener(){
+            public void changed(ChangeEvent evento,Actor actor){
+                if(flowfree.isNivelCompleto()) return;
+                flowfree.deshacerPaso();
+            }
+        });
+        btnSiguiente.addListener(new ChangeListener(){
+            public void changed(ChangeEvent evento,Actor actor){
+                int siguienteNivel=numNivelInicial+1;
+                if(siguienteNivel<=gestorNiveles.getTotalNiveles()){
+                    juego.setScreen(new PantallaJuego(juego,usuarioAct,siguienteNivel));
+                }
             }
         });
     }
@@ -172,27 +217,55 @@ public class PantallaJuego implements Screen{
         labelFails.setText("Fallos: "+flowfree.getFallos());
         labelNivel.setText("Nivel "+flowfree.getNivelAct());
         if(flowfree.isNivelCompleto()){
-            if(flowfree.getNivelAct()==gestorNiveles.getTotalNiveles()){
+            btnLimpiar.setDisabled(true);
+            btnDeshacer.setDisabled(true);
+            btnLimpiar.setColor(0.35f,0.35f,0.35f,0.55f);
+            btnDeshacer.setColor(0.35f,0.35f,0.35f,0.55f);
+            boolean esUltimo=flowfree.getNivelAct()==gestorNiveles.getTotalNiveles();
+            if(esUltimo){
                 labelMsj.setText("Felicidades, completaste todos los niveles!");
-            }else{
+                btnSiguiente.setVisible(false);
+            }
+            else{
                 labelMsj.setText("Nivel completado! Pasa al siguiente.");
+                btnSiguiente.setVisible(true);
             }
         }
     }
+    private void verificarYRegistrarVictoria(){
+        if(!flowfree.isNivelCompleto()||victoriaRegistrada) return;
+        victoriaRegistrada=true;
+        int nivelActual=flowfree.getNivelAct();
+        int puntos=calcularPuntos();
+        usuarioAct.getEstadisticas().registrarPartida(
+            nivelActual,(long)tiempoAcum,
+            flowfree.getMovimientos(),flowfree.getFallos(),puntos);
+        if(nivelActual>=usuarioAct.getNivelDesbloqueado()
+                &&nivelActual<gestorNiveles.getTotalNiveles()){
+            usuarioAct.setNivelDesbloqueado(nivelActual+1);
+        }
+        gestorUsuarios.guardarUser(usuarioAct);
+    }
+    private int calcularPuntos(){
+        int base=1000;
+        int penalizacionMov=flowfree.getMovimientos()*2;
+        int penalizacionFallos=flowfree.getFallos()*10;
+        int penalizacionTiempo=(int)(tiempoAcum);
+        return Math.max(base-penalizacionMov-penalizacionFallos-penalizacionTiempo,10);
+    }
     private void dibujarTablero(){
         Tablero tablero=flowfree.getTablero();
-        if(tablero==null){
-            return;
-        }
+        if(tablero==null) return;
         dibujador.begin(ShapeRenderer.ShapeType.Filled);
         dibujarFondoCeldas(tablero);
         dibujarCaminos(tablero);
+        dibujarExtensionesDeOrigenes(tablero);
         dibujador.end();
         dibujarLineasCuadricula(tablero);
         dibujador.begin(ShapeRenderer.ShapeType.Filled);
         dibujarPuntosOrigen(tablero);
         dibujador.end();
-}
+    }
     private void dibujarFondoCeldas(Tablero tablero){
         Color fondoCelda=new Color(0.20f,0.08f,0.38f,1f);
         for(int fila=0;fila<tablero.getFilas();fila++){
@@ -205,8 +278,7 @@ public class PantallaJuego implements Screen{
     private void dibujarCaminos(Tablero tablero){
         for(int fila=0;fila<tablero.getFilas();fila++){
             for(int columna=0;columna<tablero.getColumnas();columna++){
-                EstadoCelda estado=tablero.getEstado(fila,columna);
-                if(estado!=EstadoCelda.CAMINO&&estado!=EstadoCelda.PUNTO_ORIGEN) continue;
+                if(tablero.getEstado(fila,columna)!=EstadoCelda.CAMINO) continue;
                 if(tablero.getColor(fila,columna)==0) continue;
                 int colorId=tablero.getColor(fila,columna);
                 Color colorReal=EstiloUI.COLORES_GAME[colorId<EstiloUI.COLORES_GAME.length?colorId:0];
@@ -216,6 +288,35 @@ public class PantallaJuego implements Screen{
                 float grosor=tamCelda*GROSOR_VIA;
                 float offset=(tamCelda-grosor)/2f;
                 dibujador.rect(x+offset,y+offset,grosor,grosor);
+                if(tablero.tieneConexion(fila,columna,Tablero.CON_ARRIBA))
+                    dibujador.rect(x+offset,y+tamCelda/2f,grosor,tamCelda/2f);
+                if(tablero.tieneConexion(fila,columna,Tablero.CON_ABAJO))
+                    dibujador.rect(x+offset,y,grosor,tamCelda/2f);
+                if(tablero.tieneConexion(fila,columna,Tablero.CON_IZQ))
+                    dibujador.rect(x,y+offset,tamCelda/2f,grosor);
+                if(tablero.tieneConexion(fila,columna,Tablero.CON_DER))
+                    dibujador.rect(x+tamCelda/2f,y+offset,tamCelda/2f,grosor);
+            }
+        }
+    }
+    private void dibujarExtensionesDeOrigenes(Tablero tablero){
+        for(int fila=0;fila<tablero.getFilas();fila++){
+            for(int columna=0;columna<tablero.getColumnas();columna++){
+                if(tablero.getEstado(fila,columna)!=EstadoCelda.PUNTO_ORIGEN) continue;
+                int colorId=tablero.getColor(fila,columna);
+                if(colorId==0) continue;
+                boolean tieneAlgunaConexion=
+                    tablero.tieneConexion(fila,columna,Tablero.CON_ARRIBA)||
+                    tablero.tieneConexion(fila,columna,Tablero.CON_ABAJO)||
+                    tablero.tieneConexion(fila,columna,Tablero.CON_IZQ)||
+                    tablero.tieneConexion(fila,columna,Tablero.CON_DER);
+                if(!tieneAlgunaConexion) continue;
+                Color colorReal=EstiloUI.COLORES_GAME[colorId<EstiloUI.COLORES_GAME.length?colorId:0];
+                dibujador.setColor(colorReal);
+                float x=celdaX(columna);
+                float y=celdaY(tablero,fila);
+                float grosor=tamCelda*GROSOR_VIA;
+                float offset=(tamCelda-grosor)/2f;
                 if(tablero.tieneConexion(fila,columna,Tablero.CON_ARRIBA))
                     dibujador.rect(x+offset,y+tamCelda/2f,grosor,tamCelda/2f);
                 if(tablero.tieneConexion(fila,columna,Tablero.CON_ABAJO))
@@ -269,16 +370,18 @@ public class PantallaJuego implements Screen{
                 ultimaColArrastre=columna;
                 flowfree.resetUltimoTrazoCerrado();
                 flowfree.iniciarTrazo(fila,columna);
-            }else{
+            }
+            else{
                 if(fila!=ultimaFilaArrastre||columna!=ultimaColArrastre){
                     flowfree.continuarTrazo(fila,columna);
                     ultimaFilaArrastre=fila;
                     ultimaColArrastre=columna;
                 }
             }
-        }else{
+        }
+        else{
             if(ultimaFilaArrastre>=0){
-                flowfree.terminarTrazo();
+                flowfree.pausarTrazo();
                 ultimaFilaArrastre=-1;
                 ultimaColArrastre=-1;
             }
@@ -294,7 +397,7 @@ public class PantallaJuego implements Screen{
         return flowfree.getTablero().getFilas()-1-(int)((pixelY-origenY)/tamCelda);
     }
     private int pantallaAColumna(float pixelX){
-        return (int)((pixelX-origenX)/tamCelda);
+        return(int)((pixelX-origenX)/tamCelda);
     }
     private void actualizarTimer(float delta){
         if(!flowfree.isEnPausa()&&!flowfree.isNivelCompleto()) tiempoAcum+=delta;
