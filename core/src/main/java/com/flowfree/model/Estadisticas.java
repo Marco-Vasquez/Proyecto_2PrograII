@@ -46,6 +46,35 @@ public class Estadisticas implements Serializable {
         if(mejorMovimientosPorNivel==null) mejorMovimientosPorNivel=new HashMap<>();
         if(mejorFallosPorNivel==null) mejorFallosPorNivel=new HashMap<>();
         if(mejorPuntosPorNivel==null) mejorPuntosPorNivel=new HashMap<>();
+        if(mejorTiempoPorNivel.isEmpty()&&!historial.isEmpty()){
+            reconstruirMapasDesdeHistorial();
+        }
+    }
+    private void reconstruirMapasDesdeHistorial(){
+        tiempoTotalSeg=0;
+        totalMovimientos=0;
+        totalFallos=0;
+        puntuacionGeneral=0;
+        for(String entrada:historial){
+            try{
+                String[] partes=entrada.split("\\|");
+                if(partes.length<5) continue;
+                int nivel=Integer.parseInt(partes[0].replace("Nivel","").trim());
+                String[] tiempoParts=partes[1].trim().split(":");
+                long seg=Long.parseLong(tiempoParts[0].trim())*60+Long.parseLong(tiempoParts[1].trim());
+                int mov=Integer.parseInt(partes[2].replace("Mov:","").trim());
+                int fallos=Integer.parseInt(partes[3].replace("Fallos:","").trim());
+                int pts=Integer.parseInt(partes[4].replace("Pts:","").trim());
+                mejorTiempoPorNivel.put(nivel,seg);
+                mejorMovimientosPorNivel.put(nivel,mov);
+                mejorFallosPorNivel.put(nivel,fallos);
+                mejorPuntosPorNivel.put(nivel,pts);
+                tiempoTotalSeg+=seg;
+                totalMovimientos+=mov;
+                totalFallos+=fallos;
+                puntuacionGeneral+=pts;
+            }catch(Exception ignorado){}
+        }
     }
     public void registrarPartida(int nivel,long segundos,int movimientos,int fallos,int puntos){
         inicializarCamposFaltantes();
@@ -91,6 +120,7 @@ public class Estadisticas implements Serializable {
                 return;
             }
         }
+        historial.add(formatearEntrada(nivel,segundos,movimientos,fallos,puntos));
     }
     public double getTiempoPromedioPorNivel(){
         if(nivelesCompletados==0) return 0;
