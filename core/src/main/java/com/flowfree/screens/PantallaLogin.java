@@ -132,7 +132,7 @@ public class PantallaLogin implements Screen {
     private void construirFormulario(){
         tablaContenido.clearChildren();
         String titulo=modoRegistro ? "Crear cuenta" : "Iniciar sesion";
-        tablaContenido.add(new Label(titulo,skin)).colspan(2).center().padBottom(18f).row();
+        tablaContenido.add(new Label(titulo,skin)).colspan(2).center().padBottom(20f).row();
         tablaContenido.add(new Label("Usuario:",skin)).left().padBottom(3f);
         tablaContenido.add().row();
         campoUsername=new TextField("",skin);
@@ -160,9 +160,11 @@ public class PantallaLogin implements Screen {
         tablaContenido.add(mensajeEstado).colspan(2).width(ANCHO_CAMPO).padBottom(8f).row();
         String textoAccion=modoRegistro ? "Registrarse" : "Entrar";
         TextButton botonAccion=new TextButton(textoAccion,skin);
+        botonAccion.setColor(modoRegistro ? EstiloUI.BTN_VERDE : EstiloUI.BTN_AZUL);
         tablaContenido.add(botonAccion).colspan(2).width(ANCHO_CAMPO).height(42f).padBottom(8f).row();
         String textoCambio=modoRegistro ? "Ya tienes cuenta? Inicia sesion" : "No tienes cuenta? Registrate";
         TextButton botonCambiarModo=new TextButton(textoCambio,skin);
+        botonCambiarModo.setColor(EstiloUI.BTN_MORADOCLARO);
         tablaContenido.add(botonCambiarModo).colspan(2).width(ANCHO_CAMPO).height(36f).row();
         if(modoRegistro){
             campoPassword.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener(){

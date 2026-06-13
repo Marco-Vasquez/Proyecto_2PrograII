@@ -9,6 +9,8 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
@@ -32,6 +34,7 @@ public class PantallaNiveles implements Screen{
     private static final float ENC_ALTO=52f;
     private static final float ENC_MARGEN_TOP=14f;
     private static final float RADIO_CIRC=20f;
+    private static final Color COLOR_BLOQUEADO=new Color(0.40f,0.40f,0.40f,1f);
     public PantallaNiveles(FlowFreeGame juego,Usuario usuarioAct){
         this.juego=juego;
         this.usuarioAct=usuarioAct;
@@ -52,24 +55,18 @@ public class PantallaNiveles implements Screen{
         escenario.draw();
     }
     public void resize(int ancho,int alto){
-        if(escenario!=null){
-            escenario.dispose();
-        }
+        if(escenario!=null) escenario.dispose();
         construirEscenario();
     }
     public void pause(){}
     public void resume(){}
-    public void hide(){
-        dispose();
-    }
+    public void hide(){dispose();}
     public void dispose(){
-        if(escenario!=null){
-            escenario.dispose();
-        }
+        if(escenario!=null) escenario.dispose();
         skin.dispose();
         dibujador.dispose();
     }
-    public void construirEscenario(){
+    private void construirEscenario(){
         escenario=new Stage(new ScreenViewport());
         escenario.getViewport().update(Gdx.graphics.getWidth(),Gdx.graphics.getHeight(),true);
         Gdx.input.setInputProcessor(escenario);
@@ -77,9 +74,8 @@ public class PantallaNiveles implements Screen{
         construirUI();
     }
     private void calcularPanel(){
-        float anchoTotal,altoTotal;
-        anchoTotal=Gdx.graphics.getWidth();
-        altoTotal=Gdx.graphics.getHeight();
+        float anchoTotal=Gdx.graphics.getWidth();
+        float altoTotal=Gdx.graphics.getHeight();
         panelAncho=anchoTotal*0.78f;
         panelAlto=altoTotal*0.86f;
         panelX=(anchoTotal-panelAncho)/2f;
@@ -130,13 +126,13 @@ public class PantallaNiveles implements Screen{
             TextButton botonNivel=new TextButton(textoBoton,skin);
             final Color colorFijo=nivel.isDesbloqueado()
                 ? new Color(EstiloUI.BTN_VERDE)
-                : new Color(0.45f,0.45f,0.45f,1f);
+                : new Color(COLOR_BLOQUEADO);
             botonNivel.setColor(colorFijo);
-            botonNivel.addListener(new com.badlogic.gdx.scenes.scene2d.InputListener(){
-                public void enter(com.badlogic.gdx.scenes.scene2d.InputEvent e,float x,float y,int p,Actor from){
+            botonNivel.addListener(new InputListener(){
+                public void enter(InputEvent e,float x,float y,int p,Actor from){
                     botonNivel.setColor(colorFijo);
                 }
-                public void exit(com.badlogic.gdx.scenes.scene2d.InputEvent e,float x,float y,int p,Actor to){
+                public void exit(InputEvent e,float x,float y,int p,Actor to){
                     botonNivel.setColor(colorFijo);
                 }
             });
@@ -158,6 +154,7 @@ public class PantallaNiveles implements Screen{
         tablaRaiz.add(labelPista).width(anchoBTN).center().row();
         tablaRaiz.add().height(14f).row();
         TextButton btnVolver=new TextButton("Volver al menu",skin);
+        btnVolver.setColor(EstiloUI.BTN_AZUL);
         tablaRaiz.add(btnVolver).width(anchoBTN*0.7f).height(36f).row();
         escenario.addActor(tablaRaiz);
         btnVolver.addListener(new ChangeListener(){
@@ -167,4 +164,3 @@ public class PantallaNiveles implements Screen{
         });
     }
 }
-

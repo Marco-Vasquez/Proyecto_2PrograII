@@ -102,16 +102,19 @@ public class PantallaInicio implements Screen{
         tablaEnc.add(new Label("Flow Free",skin)).center().expand();
         escenario.addActor(tablaEnc);
         float anchoBTN=panelAncho*0.50f;
+        TextButton btnLogin=new TextButton("Iniciar Sesion",skin);
+        TextButton btnRegistro=new TextButton("Crear cuenta",skin);
+        TextButton btnSalir=new TextButton("Salir",skin);
+        btnLogin.setColor(EstiloUI.BTN_AZUL);
+        btnRegistro.setColor(EstiloUI.BTN_VERDE);
+        btnSalir.setColor(EstiloUI.BTN_ROJO);
         Table tablaRaiz=new Table();
         tablaRaiz.setFillParent(true);
         tablaRaiz.center();
         tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+20f).row();
-        TextButton btnLogin=new TextButton("Iniciar Sesion",skin);
-        TextButton btnRegistro=new TextButton("Crear cuenta",skin);
-        TextButton btnSalir=new TextButton("Salir",skin);
         tablaRaiz.add(btnLogin).width(anchoBTN).height(46f).padBottom(14f).row();
         tablaRaiz.add(btnRegistro).width(anchoBTN).height(46f).padBottom(14f).row();
-        tablaRaiz.add(btnSalir).width(anchoBTN).height(46f).padBottom(24f).row();
+        tablaRaiz.add(btnSalir).width(anchoBTN).height(46f).padBottom(20f).row();
         tablaRaiz.add(new Label("Conecta todos los puntos y completa cada nivel",skin)).center();
         escenario.addActor(tablaRaiz);
         btnLogin.addListener(new ChangeListener(){

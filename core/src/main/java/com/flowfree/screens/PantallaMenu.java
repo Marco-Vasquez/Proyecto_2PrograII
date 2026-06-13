@@ -85,8 +85,8 @@ public class PantallaMenu implements Screen{
         float zonaCircX_izq=panelX+RADIO_CIRC+10f;
         float zonaCircX_der=panelX+panelAncho-RADIO_CIRC-10f;
         float zonaCircBase=panelY+panelAlto*0.16f;
-        float paso=panelAlto*0.20f;
-        for(int posicion=0;posicion<3;posicion++){
+        float paso=panelAlto*0.13f;
+        for(int posicion=0;posicion<5;posicion++){
             float circY=zonaCircBase+posicion*paso;
             dibujador.setColor(EstiloUI.CIRCULOS_IZQ[posicion%EstiloUI.CIRCULOS_IZQ.length]);
             dibujador.circle(zonaCircX_izq,circY,RADIO_CIRC,28);
@@ -107,10 +107,6 @@ public class PantallaMenu implements Screen{
         float anchoBTN=panelAncho*0.52f;
         float altoBTN=38f;
         float sepBTN=8f;
-        Table tablaRaiz=new Table();
-        tablaRaiz.setFillParent(true);
-        tablaRaiz.center();
-        tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+16f).row();
         TextButton btnJugar=new TextButton("Jugar",skin);
         TextButton btnNiveles=new TextButton("Niveles",skin);
         TextButton btnPerfil=new TextButton("Perfil",skin);
@@ -118,6 +114,17 @@ public class PantallaMenu implements Screen{
         TextButton btnAmigos=new TextButton("Amigos",skin);
         TextButton btnConfiguraciones=new TextButton("Configuraciones",skin);
         TextButton btnCerrarSesion=new TextButton("Cerrar sesion",skin);
+        btnJugar.setColor(EstiloUI.BTN_AZUL);
+        btnNiveles.setColor(EstiloUI.BTN_VERDE);
+        btnPerfil.setColor(EstiloUI.BTN_CYAN);
+        btnEstadisticas.setColor(EstiloUI.BTN_AMARILLO);
+        btnAmigos.setColor(EstiloUI.BTN_NARANJA);
+        btnConfiguraciones.setColor(EstiloUI.BTN_MORADOCLARO);
+        btnCerrarSesion.setColor(EstiloUI.BTN_ROJO);
+        Table tablaRaiz=new Table();
+        tablaRaiz.setFillParent(true);
+        tablaRaiz.center();
+        tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+16f).row();
         tablaRaiz.add(btnJugar).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
         tablaRaiz.add(btnNiveles).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
         tablaRaiz.add(btnPerfil).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
@@ -138,7 +145,7 @@ public class PantallaMenu implements Screen{
         });
         btnPerfil.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
-            juego.setScreen(new PantallaPerfil(juego,usuarioAct));
+                juego.setScreen(new PantallaPerfil(juego,usuarioAct));
             }
         });
         btnEstadisticas.addListener(new ChangeListener(){

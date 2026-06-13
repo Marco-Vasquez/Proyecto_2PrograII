@@ -172,6 +172,7 @@ public class PantallaPerfil implements Screen{
         tablaRaiz.add(scroll).width(panelAncho*0.80f).maxHeight(altoTotal*0.62f).row();
         tablaRaiz.add().height(10f).row();
         TextButton btnVolver=new TextButton("Volver al menu",skin);
+        btnVolver.setColor(EstiloUI.BTN_AZUL);
         tablaRaiz.add(btnVolver).width(panelAncho*0.45f).height(36f).row();
         escenario.addActor(tablaRaiz);
         btnVolver.addListener(new ChangeListener(){
