@@ -20,6 +20,7 @@ import com.flowfree.game.GestorNiveles;
 import com.flowfree.model.EstadoCelda;
 import com.flowfree.model.Tablero;
 import com.flowfree.model.Usuario;
+import com.flowfree.data.GestorMusica;
 /**
  *
  * @author andres
@@ -69,6 +70,9 @@ public class PantallaJuego implements Screen{
         gestorUsuarios=new GestorUsuarios();
         gestorNiveles=new GestorNiveles();
         gestorNiveles.aplicarProgresoUsuario(usuarioAct.getNivelDesbloqueado());
+        GestorMusica.getInstance().aplicarConfiguracion(usuarioAct.getPerfil().getVolumen(),
+        usuarioAct.getPerfil().isMusicaActiva()
+    );
         flowfree=new FlowFree();
         flowfree.cargarNivel(gestorNiveles.getNivel(numNivelInicial));
         construirEscenario();

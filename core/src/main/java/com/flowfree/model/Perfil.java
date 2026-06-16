@@ -11,56 +11,58 @@ import java.io.Serializable;
  * @author mjosu
  */
 public class Perfil implements Serializable{
-
-    private static final long serialVersionUID = 1L;
-
+    
+    private static final long serialVersionUID=1L;
     private int avatarIndex;
     private String rutaFotoPerfil;
     private float volumen;
     private String idioma;
-    private PreferenciasJuego preferencias;
-
-    public Perfil() {
-        this.avatarIndex = 0;
-        this.rutaFotoPerfil = null;
-        this.volumen = 1.0f;
-        this.idioma = "es";
-        this.preferencias=new PreferenciasJuego();
-    }
-
-    public int getAvatarIndex() { 
-        return avatarIndex; 
-    }
+    private boolean musicaActiva;
+    private boolean idiomaEspanol;
     
-    public String getRutaFotoPerfil() { 
-        return rutaFotoPerfil; 
+    public Perfil(){
+        this.avatarIndex=0;
+        this.rutaFotoPerfil=null;
+        this.volumen=0.5f;
+        this.idioma="es";
+        this.musicaActiva=true;
+        this.idiomaEspanol=true;
     }
-    
-    public float getVolumen() { 
-        return volumen; 
+    public int getAvatarIndex(){
+        return avatarIndex;
     }
-    
-    public String getIdioma() {
+    public String getRutaFotoPerfil(){
+        return rutaFotoPerfil;
+    }
+    public float getVolumen(){
+        return volumen;
+    }
+    public String getIdioma(){
         return idioma;
     }
-    
-    public void setAvatarIndex(int avatarIndex) {
-        this.avatarIndex = avatarIndex;
+    public boolean isMusicaActiva(){
+        return musicaActiva;
     }
-    
-    public void setRutaFotoPerfil(String rutaFotoPerfil) {
-        this.rutaFotoPerfil = rutaFotoPerfil;
+    public boolean isIdiomaEspanol(){
+        return idiomaEspanol;
     }
-    
-    public void setVolumen(float volumen) {
-        this.volumen = volumen;
+    public void setAvatarIndex(int avatarIndex){
+        this.avatarIndex=avatarIndex;
     }
-    
-    public void setIdioma(String idioma) {
-        this.idioma = idioma;
+    public void setRutaFotoPerfil(String rutaFotoPerfil){
+        this.rutaFotoPerfil=rutaFotoPerfil;
     }
-    
-    public PreferenciasJuego getPreferencias(){
-        return preferencias;
+    public void setVolumen(float volumen){
+        this.volumen=volumen;
+    }
+    public void setIdioma(String idioma){
+        this.idioma=idioma;
+    }
+    public void setMusicaActiva(boolean musicaActiva){
+        this.musicaActiva=musicaActiva;
+    }
+    public void setIdiomaEspanol(boolean idiomaEspanol){
+        this.idiomaEspanol=idiomaEspanol;
+        this.idioma=idiomaEspanol ? "es" : "en";
     }
 }

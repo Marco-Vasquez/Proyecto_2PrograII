@@ -14,14 +14,18 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.flowfree.FlowFreeGame;
+import com.flowfree.data.GestorMusica;
+import com.flowfree.data.GestorUsuarios;
+import com.flowfree.model.Perfil;
 import com.flowfree.model.Usuario;
 /**
  *
  * @author mjosu
  */
-public class PantallaMenu implements Screen{
+public class PantallaConfiguraciones implements Screen{
     private final FlowFreeGame juego;
     private final Usuario usuarioAct;
+    private final GestorUsuarios gestorUsuarios;
     private Stage escenario;
     private Skin skin;
     private ShapeRenderer dibujador;
@@ -29,9 +33,14 @@ public class PantallaMenu implements Screen{
     private static final float ENC_ALTO=52f;
     private static final float ENC_MARGEN_TOP=14f;
     private static final float RADIO_CIRC=20f;
-    public PantallaMenu(FlowFreeGame juego,Usuario usuarioAct){
+    private Slider sliderVolumen;
+    private TextButton btnMusica;
+    private TextButton btnIdioma;
+    private Label labelVolumenValor;
+    public PantallaConfiguraciones(FlowFreeGame juego,Usuario usuarioAct){
         this.juego=juego;
         this.usuarioAct=usuarioAct;
+        this.gestorUsuarios=new GestorUsuarios();
     }
     public void show(){
         skin=new Skin(Gdx.files.internal("ui/uiskin.json"));
@@ -85,8 +94,8 @@ public class PantallaMenu implements Screen{
         float zonaCircX_izq=panelX+RADIO_CIRC+10f;
         float zonaCircX_der=panelX+panelAncho-RADIO_CIRC-10f;
         float zonaCircBase=panelY+panelAlto*0.16f;
-        float paso=panelAlto*0.13f;
-        for(int posicion=0;posicion<5;posicion++){
+        float paso=panelAlto*0.20f;
+        for(int posicion=0;posicion<3;posicion++){
             float circY=zonaCircBase+posicion*paso;
             dibujador.setColor(EstiloUI.CIRCULOS_IZQ[posicion%EstiloUI.CIRCULOS_IZQ.length]);
             dibujador.circle(zonaCircX_izq,circY,RADIO_CIRC,28);
@@ -104,68 +113,79 @@ public class PantallaMenu implements Screen{
         tablaEnc.setSize(encAncho,ENC_ALTO);
         tablaEnc.add(new Label("Flow Free",skin)).center().expand();
         escenario.addActor(tablaEnc);
-        float anchoBTN=panelAncho*0.52f;
-        float altoBTN=38f;
-        float sepBTN=8f;
-        TextButton btnJugar=new TextButton("Jugar",skin);
-        TextButton btnNiveles=new TextButton("Niveles",skin);
-        TextButton btnPerfil=new TextButton("Perfil",skin);
-        TextButton btnEstadisticas=new TextButton("Estadisticas",skin);
-        TextButton btnAmigos=new TextButton("Amigos",skin);
-        TextButton btnConfiguraciones=new TextButton("Configuraciones",skin);
-        TextButton btnCerrarSesion=new TextButton("Cerrar sesion",skin);
-        btnJugar.setColor(EstiloUI.BTN_AZUL);
-        btnNiveles.setColor(EstiloUI.BTN_VERDE);
-        btnPerfil.setColor(EstiloUI.BTN_CYAN);
-        btnEstadisticas.setColor(EstiloUI.BTN_AMARILLO);
-        btnAmigos.setColor(EstiloUI.BTN_NARANJA);
-        btnConfiguraciones.setColor(EstiloUI.BTN_MORADOCLARO);
-        btnCerrarSesion.setColor(EstiloUI.BTN_ROJO);
+        Perfil perfil=usuarioAct.getPerfil();
+        GestorMusica gestor=GestorMusica.getInstance();
+        Table tablaContenido=new Table();
+        tablaContenido.pad(16f);
+        tablaContenido.add(new Label("Configuraciones",skin)).colspan(2).center().padBottom(20f).row();
+        tablaContenido.add(new Label("Volumen:",skin)).left().padRight(20f).padBottom(12f);
+        float volumenInicial=perfil.getVolumen();
+        sliderVolumen=new Slider(0f,1f,0.05f,false,skin);
+        sliderVolumen.setValue(volumenInicial);
+        labelVolumenValor=new Label(String.format("%d%%",(int)(volumenInicial*100)),skin);
+        Table filaVolumen=new Table();
+        filaVolumen.add(sliderVolumen).width(panelAncho*0.35f).padRight(10f);
+        filaVolumen.add(labelVolumenValor).width(40f);
+        tablaContenido.add(filaVolumen).left().padBottom(12f).row();
+        tablaContenido.add(new Label("Musica:",skin)).left().padRight(20f).padBottom(12f);
+        String textoMusica=perfil.isMusicaActiva() ? "Activada" : "Desactivada";
+        btnMusica=new TextButton(textoMusica,skin);
+        btnMusica.setColor(perfil.isMusicaActiva() ? EstiloUI.BTN_VERDE : EstiloUI.BTN_ROJO);
+        tablaContenido.add(btnMusica).width(panelAncho*0.35f).height(36f).left().padBottom(12f).row();
+        tablaContenido.add(new Label("Idioma:",skin)).left().padRight(20f).padBottom(12f);
+        String textoIdioma=perfil.isIdiomaEspanol() ? "Espanol" : "English";
+        btnIdioma=new TextButton(textoIdioma,skin);
+        btnIdioma.setColor(EstiloUI.BTN_CYAN);
+        tablaContenido.add(btnIdioma).width(panelAncho*0.35f).height(36f).left().padBottom(20f).row();
+        TextButton btnGuardar=new TextButton("Guardar",skin);
+        TextButton btnVolver=new TextButton("Volver al menu",skin);
+        btnGuardar.setColor(EstiloUI.BTN_VERDE);
+        btnVolver.setColor(EstiloUI.BTN_AZUL);
+        tablaContenido.add(btnGuardar).colspan(2).width(panelAncho*0.45f).height(38f).center().padBottom(10f).row();
+        tablaContenido.add(btnVolver).colspan(2).width(panelAncho*0.45f).height(38f).center().row();
+        ScrollPane scroll=new ScrollPane(tablaContenido,skin);
+        scroll.setFadeScrollBars(true);
+        scroll.setScrollingDisabled(true,false);
+        float altoTotal=Gdx.graphics.getHeight();
         Table tablaRaiz=new Table();
         tablaRaiz.setFillParent(true);
         tablaRaiz.center();
-        tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+16f).row();
-        tablaRaiz.add(btnJugar).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
-        tablaRaiz.add(btnNiveles).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
-        tablaRaiz.add(btnPerfil).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
-        tablaRaiz.add(btnEstadisticas).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
-        tablaRaiz.add(btnAmigos).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
-        tablaRaiz.add(btnConfiguraciones).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
-        tablaRaiz.add(btnCerrarSesion).width(anchoBTN).height(altoBTN).row();
+        tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+8f).row();
+        tablaRaiz.add(scroll).width(panelAncho*0.80f).maxHeight(altoTotal*0.65f).row();
         escenario.addActor(tablaRaiz);
-        btnJugar.addListener(new ChangeListener(){
+        sliderVolumen.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
-                juego.setScreen(new PantallaNiveles(juego,usuarioAct));
+                float val=sliderVolumen.getValue();
+                labelVolumenValor.setText(String.format("%d%%",(int)(val*100)));
+                gestor.aplicarConfiguracion(val,perfil.isMusicaActiva());
             }
         });
-        btnNiveles.addListener(new ChangeListener(){
+        btnMusica.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
-                juego.setScreen(new PantallaNiveles(juego,usuarioAct));
+                boolean nuevoEstado=!perfil.isMusicaActiva();
+                perfil.setMusicaActiva(nuevoEstado);
+                btnMusica.setText(nuevoEstado ? "Activada" : "Desactivada");
+                btnMusica.setColor(nuevoEstado ? EstiloUI.BTN_VERDE : EstiloUI.BTN_ROJO);
+                gestor.aplicarConfiguracion(sliderVolumen.getValue(),nuevoEstado);
             }
         });
-        btnPerfil.addListener(new ChangeListener(){
+        btnIdioma.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
-                juego.setScreen(new PantallaPerfil(juego,usuarioAct));
+                boolean nuevoIdioma=!perfil.isIdiomaEspanol();
+                perfil.setIdiomaEspanol(nuevoIdioma);
+                btnIdioma.setText(nuevoIdioma ? "Espanol" : "English");
             }
         });
-        btnEstadisticas.addListener(new ChangeListener(){
+        btnGuardar.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
-                juego.setScreen(new PantallaEstadisticas(juego,usuarioAct));
+                perfil.setVolumen(sliderVolumen.getValue());
+                gestorUsuarios.guardarUser(usuarioAct);
+                gestor.aplicarConfiguracion(perfil.getVolumen(),perfil.isMusicaActiva());
             }
         });
-        btnAmigos.addListener(new ChangeListener(){
+        btnVolver.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
-                juego.setScreen(new PantallaAmigos(juego,usuarioAct));
-            }
-        });
-        btnConfiguraciones.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
-                juego.setScreen(new PantallaConfiguraciones(juego,usuarioAct));
-            }
-        });
-        btnCerrarSesion.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
-                juego.setScreen(new PantallaInicio(juego));
+                juego.setScreen(new PantallaMenu(juego,usuarioAct));
             }
         });
     }
