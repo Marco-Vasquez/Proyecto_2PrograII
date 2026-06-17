@@ -14,13 +14,14 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.flowfree.FlowFreeGame;
+import com.flowfree.data.GestorIdiomas;
+import com.flowfree.data.GestorMusica;
 import com.flowfree.data.GestorUsuarios;
 import com.flowfree.game.FlowFree;
 import com.flowfree.game.GestorNiveles;
 import com.flowfree.model.EstadoCelda;
 import com.flowfree.model.Tablero;
 import com.flowfree.model.Usuario;
-import com.flowfree.data.GestorMusica;
 /**
  *
  * @author andres
@@ -45,7 +46,6 @@ public class PantallaJuego implements Screen{
     private Label labelMov;
     private Label labelFails;
     private Label labelMsj;
-    private TextButton btnSiguiente;
     private TextButton btnLimpiar;
     private TextButton btnDeshacer;
     private float tiempoAcum;
@@ -59,6 +59,10 @@ public class PantallaJuego implements Screen{
     private int ultimaFilaArrastre=-1;
     private int ultimaColArrastre=-1;
     private boolean victoriaRegistrada=false;
+    private boolean modalMostrado=false;
+    private com.flowfree.hilos.TimerJuego timerHilo;
+    private com.flowfree.hilos.AutoSave autoSave;
+    private GestorIdiomas idiomas=GestorIdiomas.getInstance();
     public PantallaJuego(FlowFreeGame juego,Usuario usuarioAct,int numNivel){
         this.juego=juego;
         this.usuarioAct=usuarioAct;
@@ -70,15 +74,21 @@ public class PantallaJuego implements Screen{
         gestorUsuarios=new GestorUsuarios();
         gestorNiveles=new GestorNiveles();
         gestorNiveles.aplicarProgresoUsuario(usuarioAct.getNivelDesbloqueado());
-        GestorMusica.getInstance().aplicarConfiguracion(usuarioAct.getPerfil().getVolumen(),
-        usuarioAct.getPerfil().isMusicaActiva()
-    );
+        GestorMusica.getInstance().aplicarConfiguracion(
+            usuarioAct.getPerfil().getVolumen(),
+            usuarioAct.getPerfil().isMusicaActiva()
+        );
+        GestorIdiomas.getInstance().setEspanol(usuarioAct.getPerfil().isIdiomaEspanol());
         flowfree=new FlowFree();
         flowfree.cargarNivel(gestorNiveles.getNivel(numNivelInicial));
+        timerHilo=new com.flowfree.hilos.TimerJuego();
+        timerHilo.iniciar();
+        autoSave=new com.flowfree.hilos.AutoSave(usuarioAct,gestorUsuarios);
+        autoSave.iniciar();
         construirEscenario();
     }
     public void render(float delta){
-        actualizarTimer(delta);
+        actualizarTimer();
         procesarInput();
         verificarYRegistrarVictoria();
         Gdx.gl.glClearColor(EstiloUI.FONDO.r,EstiloUI.FONDO.g,EstiloUI.FONDO.b,1f);
@@ -98,6 +108,8 @@ public class PantallaJuego implements Screen{
     public void resume(){}
     public void hide(){dispose();}
     public void dispose(){
+        if(timerHilo!=null) timerHilo.detener();
+        if(autoSave!=null) autoSave.detener();
         if(escenario!=null) escenario.dispose();
         skin.dispose();
         dibujador.dispose();
@@ -146,7 +158,8 @@ public class PantallaJuego implements Screen{
         tablaEnc.setFillParent(true);
         tablaEnc.top();
         float margenArriba=Gdx.graphics.getHeight()-(panelY+panelAlto)+8f;
-        tablaEnc.add(new Label("Flow Free",skin)).colspan(3).center().padTop(margenArriba).height(ALTO_ENC);
+        tablaEnc.add(new Label(idiomas.get("app.titulo"),skin))
+            .colspan(3).center().padTop(margenArriba).height(ALTO_ENC);
         escenario.addActor(tablaEnc);
         Table tablaHUD=new Table();
         tablaHUD.setFillParent(true);
@@ -156,14 +169,11 @@ public class PantallaJuego implements Screen{
         labelMov=new Label("Mov: 0",skin);
         labelFails=new Label("Fallos: 0",skin);
         labelMsj=new Label("",skin);
-        TextButton btnMenu=new TextButton("Menu",skin);
-        btnLimpiar=new TextButton("Limpiar",skin);
-        btnDeshacer=new TextButton("Deshacer",skin);
-        btnSiguiente=new TextButton("Siguiente",skin);
-        btnSiguiente.setVisible(false);
+        TextButton btnMenu=new TextButton(idiomas.get("juego.btn.menu"),skin);
+        btnLimpiar=new TextButton(idiomas.get("juego.btn.limpiar"),skin);
+        btnDeshacer=new TextButton(idiomas.get("juego.btn.deshacer"),skin);
         btnLimpiar.setColor(EstiloUI.BTN_NARANJA);
         btnDeshacer.setColor(EstiloUI.BTN_AMARILLO);
-        btnSiguiente.setColor(EstiloUI.BTN_VERDE);
         Table tablaCentro=new Table();
         tablaCentro.add(labelNivel).padRight(12);
         tablaCentro.add(labelTimer).padRight(12);
@@ -172,7 +182,6 @@ public class PantallaJuego implements Screen{
         Table tablaBotones=new Table();
         tablaBotones.add(btnDeshacer).width(76).height(28).padRight(4);
         tablaBotones.add(btnLimpiar).width(70).height(28).padRight(4);
-        tablaBotones.add(btnSiguiente).width(78).height(28).padRight(4);
         tablaBotones.add(btnMenu).width(58).height(28);
         tablaHUD.add(new Label(usuarioAct.getUsername(),skin)).left().expandX();
         tablaHUD.add(tablaCentro).center().expandX();
@@ -190,9 +199,10 @@ public class PantallaJuego implements Screen{
                 if(flowfree.isNivelCompleto()) return;
                 flowfree.reiniciar();
                 tiempoAcum=0;
+                timerHilo.reiniciar();
                 victoriaRegistrada=false;
+                modalMostrado=false;
                 labelMsj.setText("");
-                btnSiguiente.setVisible(false);
                 btnLimpiar.setDisabled(false);
                 btnDeshacer.setDisabled(false);
                 btnLimpiar.setColor(EstiloUI.BTN_NARANJA);
@@ -205,40 +215,25 @@ public class PantallaJuego implements Screen{
                 flowfree.deshacerPaso();
             }
         });
-        btnSiguiente.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
-                int siguienteNivel=numNivelInicial+1;
-                if(siguienteNivel<=gestorNiveles.getTotalNiveles()){
-                    juego.setScreen(new PantallaJuego(juego,usuarioAct,siguienteNivel));
-                }
-            }
-        });
     }
     private void actualizarHUD(){
-        int segundos=(int)tiempoAcum;
-        labelTimer.setText(String.format("%02d:%02d",segundos/60,segundos%60));
+        tiempoAcum=timerHilo.getSegundos();
+        labelTimer.setText(String.format("%02d:%02d",(int)tiempoAcum/60,(int)tiempoAcum%60));
         labelMov.setText("Mov: "+flowfree.getMovimientos());
         labelFails.setText("Fallos: "+flowfree.getFallos());
         labelNivel.setText("Nivel "+flowfree.getNivelAct());
         if(flowfree.isNivelCompleto()){
+            timerHilo.pausar();
             btnLimpiar.setDisabled(true);
             btnDeshacer.setDisabled(true);
             btnLimpiar.setColor(0.35f,0.35f,0.35f,0.55f);
             btnDeshacer.setColor(0.35f,0.35f,0.35f,0.55f);
-            boolean esUltimo=flowfree.getNivelAct()==gestorNiveles.getTotalNiveles();
-            if(esUltimo){
-                labelMsj.setText("Felicidades, completaste todos los niveles!");
-                btnSiguiente.setVisible(false);
-            }
-            else{
-                labelMsj.setText("Nivel completado! Pasa al siguiente.");
-                btnSiguiente.setVisible(true);
-            }
         }
     }
     private void verificarYRegistrarVictoria(){
         if(!flowfree.isNivelCompleto()||victoriaRegistrada) return;
         victoriaRegistrada=true;
+        tiempoAcum=timerHilo.getSegundos();
         int nivelActual=flowfree.getNivelAct();
         int puntos=calcularPuntos();
         usuarioAct.getEstadisticas().registrarPartida(
@@ -249,6 +244,8 @@ public class PantallaJuego implements Screen{
             usuarioAct.setNivelDesbloqueado(nivelActual+1);
         }
         gestorUsuarios.guardarUser(usuarioAct);
+        alCompletarNivel((long)tiempoAcum,flowfree.getMovimientos(),flowfree.getFallos());
+        mostrarModalVictoria();
     }
     private int calcularPuntos(){
         int base=1000;
@@ -256,6 +253,66 @@ public class PantallaJuego implements Screen{
         int penalizacionFallos=flowfree.getFallos()*10;
         int penalizacionTiempo=(int)(tiempoAcum);
         return Math.max(base-penalizacionMov-penalizacionFallos-penalizacionTiempo,10);
+    }
+    private void mostrarModalVictoria(){
+        if(modalMostrado) return;
+        modalMostrado=true;
+        int nivelActual=flowfree.getNivelAct();
+        long segundos=(long)tiempoAcum;
+        int puntos=calcularPuntos();
+        boolean esUltimo=nivelActual==gestorNiveles.getTotalNiveles();
+        float anchoModal=340f;
+        float altoModal=esUltimo ? 260f : 300f;
+        float modalX=(escenario.getWidth()-anchoModal)/2f;
+        float modalY=(escenario.getHeight()-altoModal)/2f;
+        Table fondo=new Table();
+        fondo.setFillParent(true);
+        fondo.setBackground(skin.newDrawable("white",new Color(0f,0f,0f,0.55f)));
+        escenario.addActor(fondo);
+        Table modal=new Table(skin);
+        modal.setBackground(skin.newDrawable("white",EstiloUI.PANEL));
+        modal.setBounds(modalX,modalY,anchoModal,altoModal);
+        String tituloTexto=esUltimo
+            ? idiomas.get("juego.victoria.todos")
+            : "Nivel "+nivelActual+" "+idiomas.get("juego.victoria.nivel");
+        modal.add(new Label(tituloTexto,skin)).colspan(2).center().padTop(14f).padBottom(14f).row();
+        modal.add(new Label(idiomas.get("juego.victoria.tiempo"),skin)).left().padRight(16f).padBottom(6f);
+        modal.add(new Label(String.format("%02d:%02d",segundos/60,segundos%60),skin)).left().padBottom(6f).row();
+        modal.add(new Label(idiomas.get("juego.victoria.movimientos"),skin)).left().padRight(16f).padBottom(6f);
+        modal.add(new Label(""+flowfree.getMovimientos(),skin)).left().padBottom(6f).row();
+        modal.add(new Label(idiomas.get("juego.victoria.fallos"),skin)).left().padRight(16f).padBottom(6f);
+        modal.add(new Label(""+flowfree.getFallos(),skin)).left().padBottom(6f).row();
+        modal.add(new Label(idiomas.get("juego.victoria.puntos"),skin)).left().padRight(16f).padBottom(14f);
+        modal.add(new Label(""+puntos,skin)).left().padBottom(14f).row();
+        TextButton btnSiguienteModal=new TextButton(idiomas.get("juego.victoria.btn.siguiente"),skin);
+        TextButton btnReintentar=new TextButton(idiomas.get("juego.victoria.btn.reintentar"),skin);
+        TextButton btnMapa=new TextButton(idiomas.get("juego.victoria.btn.mapa"),skin);
+        btnSiguienteModal.setColor(EstiloUI.BTN_VERDE);
+        btnReintentar.setColor(EstiloUI.BTN_AMARILLO);
+        btnMapa.setColor(EstiloUI.BTN_AZUL);
+        float anchoBTN=anchoModal*0.72f;
+        if(!esUltimo){
+            modal.add(btnSiguienteModal).colspan(2).width(anchoBTN).height(34f).padBottom(6f).row();
+        }
+        modal.add(btnReintentar).colspan(2).width(anchoBTN).height(34f).padBottom(6f).row();
+        modal.add(btnMapa).colspan(2).width(anchoBTN).height(34f).padBottom(14f).row();
+        escenario.addActor(modal);
+        final int numSiguiente=nivelActual+1;
+        btnSiguienteModal.addListener(new ChangeListener(){
+            public void changed(ChangeEvent evento,Actor actor){
+                juego.setScreen(new PantallaJuego(juego,usuarioAct,numSiguiente));
+            }
+        });
+        btnReintentar.addListener(new ChangeListener(){
+            public void changed(ChangeEvent evento,Actor actor){
+                juego.setScreen(new PantallaJuego(juego,usuarioAct,numNivelInicial));
+            }
+        });
+        btnMapa.addListener(new ChangeListener(){
+            public void changed(ChangeEvent evento,Actor actor){
+                juego.setScreen(new PantallaNiveles(juego,usuarioAct));
+            }
+        });
     }
     private void dibujarTablero(){
         Tablero tablero=flowfree.getTablero();
@@ -309,12 +366,12 @@ public class PantallaJuego implements Screen{
                 if(tablero.getEstado(fila,columna)!=EstadoCelda.PUNTO_ORIGEN) continue;
                 int colorId=tablero.getColor(fila,columna);
                 if(colorId==0) continue;
-                boolean tieneAlgunaConexion=
+                boolean tieneConexion=
                     tablero.tieneConexion(fila,columna,Tablero.CON_ARRIBA)||
                     tablero.tieneConexion(fila,columna,Tablero.CON_ABAJO)||
                     tablero.tieneConexion(fila,columna,Tablero.CON_IZQ)||
                     tablero.tieneConexion(fila,columna,Tablero.CON_DER);
-                if(!tieneAlgunaConexion) continue;
+                if(!tieneConexion) continue;
                 Color colorReal=EstiloUI.COLORES_GAME[colorId<EstiloUI.COLORES_GAME.length?colorId:0];
                 dibujador.setColor(colorReal);
                 float x=celdaX(columna);
@@ -374,16 +431,14 @@ public class PantallaJuego implements Screen{
                 ultimaColArrastre=columna;
                 flowfree.resetUltimoTrazoCerrado();
                 flowfree.iniciarTrazo(fila,columna);
-            }
-            else{
+            }else{
                 if(fila!=ultimaFilaArrastre||columna!=ultimaColArrastre){
                     flowfree.continuarTrazo(fila,columna);
                     ultimaFilaArrastre=fila;
                     ultimaColArrastre=columna;
                 }
             }
-        }
-        else{
+        }else{
             if(ultimaFilaArrastre>=0){
                 flowfree.pausarTrazo();
                 ultimaFilaArrastre=-1;
@@ -391,19 +446,15 @@ public class PantallaJuego implements Screen{
             }
         }
     }
-    private float celdaX(int columna){
-        return origenX+columna*tamCelda;
+    private float celdaX(int columna){return origenX+columna*tamCelda;}
+    private float celdaY(Tablero tablero,int fila){return origenY+(tablero.getFilas()-1-fila)*tamCelda;}
+    private int pantallaAFila(float pixelY){return flowfree.getTablero().getFilas()-1-(int)((pixelY-origenY)/tamCelda);}
+    private int pantallaAColumna(float pixelX){return(int)((pixelX-origenX)/tamCelda);}
+    private void actualizarTimer(){
+        if(flowfree.isNivelCompleto()) timerHilo.pausar();
     }
-    private float celdaY(Tablero tablero,int fila){
-        return origenY+(tablero.getFilas()-1-fila)*tamCelda;
-    }
-    private int pantallaAFila(float pixelY){
-        return flowfree.getTablero().getFilas()-1-(int)((pixelY-origenY)/tamCelda);
-    }
-    private int pantallaAColumna(float pixelX){
-        return(int)((pixelX-origenX)/tamCelda);
-    }
-    private void actualizarTimer(float delta){
-        if(!flowfree.isEnPausa()&&!flowfree.isNivelCompleto()) tiempoAcum+=delta;
-    }
+    protected void alCompletarNivel(long tiempo,int movimientos,int fallos){}
+    protected Usuario getUsuarioAct(){return usuarioAct;}
+    protected Label getLabelMsj(){return labelMsj;}
+    
 }

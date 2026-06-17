@@ -5,6 +5,7 @@
 package com.flowfree.data;
 import com.flowfree.model.Usuario;
 import java.io.IOException;
+import com.flowfree.model.SolicitudAmistad;
 /**
  *
  * @author andres
@@ -129,5 +130,44 @@ public class GestorUsuarios {
         }
         return usuario.getEstadisticas().getPuntuacionGeneral();
     }
-    
+    public boolean enviarSolicitud(String usernameEmisor,String usernameReceptor){
+        Usuario emisor=cargarUser(usernameEmisor);
+        Usuario receptor=cargarUser(usernameReceptor);
+        if(emisor==null||receptor==null) return false;
+        if(emisor.getAmigos().contains(usernameReceptor)) return false;
+        if(emisor.yaEnvioSolicitudA(usernameReceptor)) return false;
+        if(receptor.tieneSolicitudPendienteDe(usernameEmisor)) return false;
+        SolicitudAmistad solicitud=new SolicitudAmistad(usernameEmisor,usernameReceptor);
+        emisor.getSolicitudesEnviadas().add(solicitud);
+        receptor.getSolicitudesRecibidas().add(new SolicitudAmistad(usernameEmisor,usernameReceptor));
+        guardarUser(emisor);
+        guardarUser(receptor);
+        return true;
+    }
+    public boolean aceptarSolicitud(Usuario receptor,String usernameEmisor){
+        for(SolicitudAmistad s:receptor.getSolicitudesRecibidas()){
+            if(s.getEmisor().equals(usernameEmisor)&&s.isPendiente()){
+                s.aceptar();
+                receptor.agregarAmigo(usernameEmisor);
+                guardarUser(receptor);
+                Usuario emisor=cargarUser(usernameEmisor);
+                if(emisor!=null){
+                    emisor.agregarAmigo(receptor.getUsername());
+                    for(SolicitudAmistad se:emisor.getSolicitudesEnviadas()){
+                        if(se.getReceptor().equals(receptor.getUsername())) se.aceptar();
+                    }
+                    guardarUser(emisor);
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+    public boolean rechazarSolicitud(Usuario receptor,String usernameEmisor){
+        receptor.getSolicitudesRecibidas().removeIf(
+            s->s.getEmisor().equals(usernameEmisor)&&s.isPendiente()
+        );
+        guardarUser(receptor);
+        return true;
+    }
 }

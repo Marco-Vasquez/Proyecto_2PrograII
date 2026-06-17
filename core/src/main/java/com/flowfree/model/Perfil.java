@@ -11,7 +11,6 @@ import java.io.Serializable;
  * @author mjosu
  */
 public class Perfil implements Serializable{
-    
     private static final long serialVersionUID=1L;
     private int avatarIndex;
     private String rutaFotoPerfil;
@@ -19,7 +18,6 @@ public class Perfil implements Serializable{
     private String idioma;
     private boolean musicaActiva;
     private boolean idiomaEspanol;
-    
     public Perfil(){
         this.avatarIndex=0;
         this.rutaFotoPerfil=null;
@@ -27,6 +25,12 @@ public class Perfil implements Serializable{
         this.idioma="es";
         this.musicaActiva=true;
         this.idiomaEspanol=true;
+    }
+    private Object readResolve(){
+        if(volumen<=0f) volumen=0.5f;
+        if(idioma==null) idioma="es";
+        if(idioma.equals("es")) idiomaEspanol=true;
+        return this;
     }
     public int getAvatarIndex(){
         return avatarIndex;
@@ -44,16 +48,16 @@ public class Perfil implements Serializable{
         return musicaActiva;
     }
     public boolean isIdiomaEspanol(){
-        return idiomaEspanol;
+        return "es".equals(idioma);
     }
-    public void setAvatarIndex(int avatarIndex){
-        this.avatarIndex=avatarIndex;
+    public void setAvatarIndex(int idx){
+        this.avatarIndex=idx;
     }
-    public void setRutaFotoPerfil(String rutaFotoPerfil){
-        this.rutaFotoPerfil=rutaFotoPerfil;
+    public void setRutaFotoPerfil(String ruta){
+        this.rutaFotoPerfil=ruta;
     }
     public void setVolumen(float volumen){
-        this.volumen=volumen;
+        this.volumen=Math.max(0f,Math.min(1f,volumen));
     }
     public void setIdioma(String idioma){
         this.idioma=idioma;
@@ -61,8 +65,7 @@ public class Perfil implements Serializable{
     public void setMusicaActiva(boolean musicaActiva){
         this.musicaActiva=musicaActiva;
     }
-    public void setIdiomaEspanol(boolean idiomaEspanol){
-        this.idiomaEspanol=idiomaEspanol;
-        this.idioma=idiomaEspanol ? "es" : "en";
+    public void setIdiomaEspanol(boolean espanol){
+        this.idioma = espanol ? "es" : "en";
     }
 }

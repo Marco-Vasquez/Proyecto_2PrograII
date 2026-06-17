@@ -15,6 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.flowfree.FlowFreeGame;
 import com.flowfree.model.Usuario;
+import com.flowfree.data.GestorIdiomas;
 /**
  *
  * @author mjosu
@@ -29,6 +30,7 @@ public class PantallaMenu implements Screen{
     private static final float ENC_ALTO=52f;
     private static final float ENC_MARGEN_TOP=14f;
     private static final float RADIO_CIRC=20f;
+    private GestorIdiomas idiomas;
     public PantallaMenu(FlowFreeGame juego,Usuario usuarioAct){
         this.juego=juego;
         this.usuarioAct=usuarioAct;
@@ -36,6 +38,7 @@ public class PantallaMenu implements Screen{
     public void show(){
         skin=new Skin(Gdx.files.internal("ui/uiskin.json"));
         dibujador=new ShapeRenderer();
+        idiomas=GestorIdiomas.getInstance();
         construirEscenario();
     }
     public void render(float delta){
@@ -107,18 +110,20 @@ public class PantallaMenu implements Screen{
         float anchoBTN=panelAncho*0.52f;
         float altoBTN=38f;
         float sepBTN=8f;
-        TextButton btnJugar=new TextButton("Jugar",skin);
-        TextButton btnNiveles=new TextButton("Niveles",skin);
-        TextButton btnPerfil=new TextButton("Perfil",skin);
-        TextButton btnEstadisticas=new TextButton("Estadisticas",skin);
-        TextButton btnAmigos=new TextButton("Amigos",skin);
-        TextButton btnConfiguraciones=new TextButton("Configuraciones",skin);
-        TextButton btnCerrarSesion=new TextButton("Cerrar sesion",skin);
+        TextButton btnJugar=new TextButton(idiomas.get("menu.btn.jugar"),skin);
+        TextButton btnNiveles=new TextButton(idiomas.get("menu.btn.niveles"),skin);
+        TextButton btnPerfil=new TextButton(idiomas.get("menu.btn.perfil"),skin);
+        TextButton btnEstadisticas=new TextButton(idiomas.get("menu.btn.estadisticas"),skin);
+        TextButton btnAmigos=new TextButton(idiomas.get("menu.btn.amigos"),skin);
+        TextButton btnRetos=new TextButton(idiomas.get("menu.btn.retos"),skin);
+        TextButton btnConfiguraciones=new TextButton(idiomas.get("menu.btn.configuraciones"),skin);
+        TextButton btnCerrarSesion=new TextButton(idiomas.get("menu.btn.cerrarsesion"),skin);
         btnJugar.setColor(EstiloUI.BTN_AZUL);
         btnNiveles.setColor(EstiloUI.BTN_VERDE);
         btnPerfil.setColor(EstiloUI.BTN_CYAN);
         btnEstadisticas.setColor(EstiloUI.BTN_AMARILLO);
         btnAmigos.setColor(EstiloUI.BTN_NARANJA);
+        btnRetos.setColor(EstiloUI.BTN_MORADOCLARO);
         btnConfiguraciones.setColor(EstiloUI.BTN_MORADOCLARO);
         btnCerrarSesion.setColor(EstiloUI.BTN_ROJO);
         Table tablaRaiz=new Table();
@@ -130,6 +135,7 @@ public class PantallaMenu implements Screen{
         tablaRaiz.add(btnPerfil).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
         tablaRaiz.add(btnEstadisticas).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
         tablaRaiz.add(btnAmigos).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
+        tablaRaiz.add(btnRetos).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
         tablaRaiz.add(btnConfiguraciones).width(anchoBTN).height(altoBTN).padBottom(sepBTN).row();
         tablaRaiz.add(btnCerrarSesion).width(anchoBTN).height(altoBTN).row();
         escenario.addActor(tablaRaiz);
@@ -156,6 +162,11 @@ public class PantallaMenu implements Screen{
         btnAmigos.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaAmigos(juego,usuarioAct));
+            }
+        });
+        btnRetos.addListener(new ChangeListener(){
+            public void changed(ChangeEvent evento,Actor actor){
+                juego.setScreen(new PantallaRetos(juego,usuarioAct));
             }
         });
         btnConfiguraciones.addListener(new ChangeListener(){

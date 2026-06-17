@@ -3,7 +3,6 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.flowfree.screens;
-
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
@@ -14,17 +13,22 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.flowfree.FlowFreeGame;
+import com.flowfree.data.GestorIdiomas;
+import com.flowfree.data.GestorRetos;
 import com.flowfree.data.GestorUsuarios;
-import com.flowfree.model.SolicitudAmistad;
+import com.flowfree.game.GestorNiveles;
+import com.flowfree.model.Nivel;
+import com.flowfree.model.RetoCompetitivo;
 import com.flowfree.model.Usuario;
 import java.util.List;
 /**
  *
- * @author mjosu
+ * @author andres
  */
-public class PantallaAmigos implements Screen{
+public class PantallaRetos implements Screen{
     private final FlowFreeGame juego;
     private final Usuario usuarioAct;
+    private final GestorRetos gestorRetos;
     private final GestorUsuarios gestorUsuarios;
     private Stage escenario;
     private Skin skin;
@@ -34,9 +38,11 @@ public class PantallaAmigos implements Screen{
     private static final float ENC_MARGEN_TOP=14f;
     private static final float RADIO_CIRC=20f;
     private Label labelMensaje;
-    public PantallaAmigos(FlowFreeGame juego,Usuario usuarioAct){
+    private GestorIdiomas idiomas=GestorIdiomas.getInstance();
+    public PantallaRetos(FlowFreeGame juego,Usuario usuarioAct){
         this.juego=juego;
         this.usuarioAct=usuarioAct;
+        this.gestorRetos=new GestorRetos();
         this.gestorUsuarios=new GestorUsuarios();
     }
     public void show(){
@@ -108,100 +114,91 @@ public class PantallaAmigos implements Screen{
         Table tablaEnc=new Table();
         tablaEnc.setPosition(encX,encY);
         tablaEnc.setSize(encAncho,ENC_ALTO);
-        tablaEnc.add(new Label("Flow Free",skin)).center().expand();
+        tablaEnc.add(new Label(idiomas.get("app.titulo"),skin)).center().expand();
         escenario.addActor(tablaEnc);
-        List<String> todosLosUsuarios=gestorUsuarios.listarUsuariosRegistrados();
-        List<String> usuariosDisponibles=new java.util.ArrayList<>();
-        for(String nombre:todosLosUsuarios){
-            if(!nombre.equals(usuarioAct.getUsername())
-                    &&!usuarioAct.getAmigos().contains(nombre)
-                    &&!usuarioAct.yaEnvioSolicitudA(nombre)){
-                usuariosDisponibles.add(nombre);
-            }
-        }
         Table tablaContenido=new Table();
         tablaContenido.pad(12f);
-        tablaContenido.add(new Label("Amigos y Solicitudes",skin)).colspan(3).center().padBottom(14f).row();
+        tablaContenido.add(new Label(idiomas.get("retos.titulo"),skin)).colspan(3).center().padBottom(14f).row();
         labelMensaje=new Label("",skin);
-        List<SolicitudAmistad> pendientes=usuarioAct.getSolicitudesRecibidas();
-        boolean hayPendientes=false;
-        for(SolicitudAmistad s:pendientes){
-            if(s.isPendiente()) hayPendientes=true;
-        }
-        if(hayPendientes){
-            tablaContenido.add(new Label("Solicitudes recibidas:",skin)).colspan(3).left().padBottom(6f).row();
-            for(SolicitudAmistad solicitud:pendientes){
-                if(!solicitud.isPendiente()) continue;
-                String emisor=solicitud.getEmisor();
-                tablaContenido.add(new Label(emisor,skin)).left().expandX().padRight(8f);
-                TextButton btnAceptar=new TextButton("Aceptar",skin);
-                TextButton btnRechazar=new TextButton("Rechazar",skin);
+        List<RetoCompetitivo> pendientes=gestorRetos.getRetosPendientes(usuarioAct);
+        if(!pendientes.isEmpty()){
+            tablaContenido.add(new Label(idiomas.get("retos.pendientes"),skin)).colspan(3).left().padBottom(6f).row();
+            for(RetoCompetitivo reto:pendientes){
+                String textoReto=reto.getRetador()+" - Nivel "+reto.getNumNivel();
+                tablaContenido.add(new Label(textoReto,skin)).left().expandX().padRight(6f);
+                TextButton btnAceptar=new TextButton(idiomas.get("retos.btn.aceptar"),skin);
+                TextButton btnRechazar=new TextButton(idiomas.get("retos.btn.rechazar"),skin);
                 btnAceptar.setColor(EstiloUI.BTN_VERDE);
                 btnRechazar.setColor(EstiloUI.BTN_ROJO);
-                tablaContenido.add(btnAceptar).width(80f).height(30f).padRight(4f);
+                tablaContenido.add(btnAceptar).width(100f).height(30f).padRight(4f);
                 tablaContenido.add(btnRechazar).width(80f).height(30f).row();
                 btnAceptar.addListener(new ChangeListener(){
                     public void changed(ChangeEvent evento,Actor actor){
-                        gestorUsuarios.aceptarSolicitud(usuarioAct,emisor);
-                        juego.setScreen(new PantallaAmigos(juego,usuarioAct));
+                        juego.setScreen(new PantallaJuegoReto(juego,usuarioAct,reto,gestorRetos));
                     }
                 });
                 btnRechazar.addListener(new ChangeListener(){
                     public void changed(ChangeEvent evento,Actor actor){
-                        gestorUsuarios.rechazarSolicitud(usuarioAct,emisor);
-                        juego.setScreen(new PantallaAmigos(juego,usuarioAct));
+                        gestorRetos.rechazarReto(usuarioAct,reto);
+                        juego.setScreen(new PantallaRetos(juego,usuarioAct));
                     }
                 });
             }
             tablaContenido.add().height(10f).colspan(3).row();
-        }
-        tablaContenido.add(new Label("Enviar solicitud:",skin)).colspan(3).left().padBottom(4f).row();
-        if(usuariosDisponibles.isEmpty()){
-            tablaContenido.add(new Label("No hay usuarios disponibles",skin)).colspan(3).left().padBottom(8f).row();
         }else{
-            com.badlogic.gdx.scenes.scene2d.ui.SelectBox<String> selector=
-                new com.badlogic.gdx.scenes.scene2d.ui.SelectBox<>(skin);
-            com.badlogic.gdx.utils.Array<String> items=new com.badlogic.gdx.utils.Array<>();
-            for(String nombre:usuariosDisponibles) items.add(nombre);
-            selector.setItems(items);
-            TextButton btnEnviar=new TextButton("Enviar",skin);
-            btnEnviar.setColor(EstiloUI.BTN_AZUL);
-            tablaContenido.add(selector).width(panelAncho*0.42f).height(34f).padRight(8f).colspan(2);
-            tablaContenido.add(btnEnviar).width(80f).height(34f).row();
-            tablaContenido.add(labelMensaje).colspan(3).left().padBottom(10f).row();
-            btnEnviar.addListener(new ChangeListener(){
+            tablaContenido.add(new Label(idiomas.get("retos.sinRetos"),skin)).colspan(3).left().padBottom(10f).row();
+        }
+        tablaContenido.add(new Label(idiomas.get("retos.nuevo"),skin)).colspan(3).left().padBottom(6f).row();
+        List<String> amigos=usuarioAct.getAmigos();
+        if(!amigos.isEmpty()){
+            SelectBox<String> selectorAmigo=new SelectBox<>(skin);
+            com.badlogic.gdx.utils.Array<String> itemsAmigos=new com.badlogic.gdx.utils.Array<>();
+            for(String a:amigos) itemsAmigos.add(a);
+            selectorAmigo.setItems(itemsAmigos);
+            GestorNiveles gestorNiveles=new GestorNiveles();
+            gestorNiveles.aplicarProgresoUsuario(usuarioAct.getNivelDesbloqueado());
+            Nivel[] niveles=gestorNiveles.getTodosLosNiveles();
+            SelectBox<String> selectorNivel=new SelectBox<>(skin);
+            com.badlogic.gdx.utils.Array<String> itemsNiveles=new com.badlogic.gdx.utils.Array<>();
+            for(Nivel n:niveles){
+                if(n.isDesbloqueado()) itemsNiveles.add("Nivel "+n.getNumNivel());
+            }
+            if(!itemsNiveles.isEmpty()) selectorNivel.setItems(itemsNiveles);
+            TextButton btnEnviarReto=new TextButton(idiomas.get("retos.btn.enviar"),skin);
+            btnEnviarReto.setColor(EstiloUI.BTN_NARANJA);
+            tablaContenido.add(new Label(idiomas.get("retos.nuevo"),skin)).left().padBottom(4f);
+            tablaContenido.add(selectorAmigo).width(panelAncho*0.35f).height(34f).padBottom(4f).colspan(2).row();
+            tablaContenido.add(new Label(idiomas.get("retos.selNivel"),skin)).left().padBottom(4f);
+            tablaContenido.add(selectorNivel).width(panelAncho*0.35f).height(34f).padBottom(4f).colspan(2).row();
+            tablaContenido.add(btnEnviarReto).colspan(3).width(panelAncho*0.45f).height(34f).center().padBottom(6f).row();
+            tablaContenido.add(labelMensaje).colspan(3).left().row();
+            btnEnviarReto.addListener(new ChangeListener(){
                 public void changed(ChangeEvent evento,Actor actor){
-                    String seleccionado=selector.getSelected();
-                    if(seleccionado==null) return;
-                    boolean exito=gestorUsuarios.enviarSolicitud(usuarioAct.getUsername(),seleccionado);
+                    String amigoSel=selectorAmigo.getSelected();
+                    String nivelSel=selectorNivel.getSelected();
+                    if(amigoSel==null||nivelSel==null) return;
+                    int numNivel=Integer.parseInt(nivelSel.replace("Nivel ","").trim());
+                    Usuario amigo=gestorUsuarios.cargarUser(amigoSel);
+                    if(amigo==null||amigo.getNivelDesbloqueado()<numNivel){
+                        labelMensaje.setText(idiomas.get("retos.nivelBloqueado"));
+                        return;
+                    }
+                    boolean exito=gestorRetos.enviarReto(usuarioAct.getUsername(),amigoSel,numNivel);
                     if(exito){
-                        Usuario actualizado=gestorUsuarios.cargarUser(usuarioAct.getUsername());
-                        if(actualizado!=null) juego.setScreen(new PantallaAmigos(juego,actualizado));
+                        Usuario retadorActualizado=gestorUsuarios.cargarUser(usuarioAct.getUsername());
+                        List<RetoCompetitivo> retosEnviados=retadorActualizado!=null
+                            ? retadorActualizado.getRetos() : usuarioAct.getRetos();
+                        if(!retosEnviados.isEmpty()){
+                            RetoCompetitivo retoNuevo=retosEnviados.get(retosEnviados.size()-1);
+                            gestorRetos.registrarResultadoRetador(
+                                usuarioAct,retosEnviados.size()-1,0,0,0);
+                            juego.setScreen(new PantallaJuegoReto(juego,usuarioAct,retoNuevo,gestorRetos));
+                        }
                     }else{
-                        labelMensaje.setText("No se pudo enviar la solicitud");
+                        labelMensaje.setText(idiomas.get("retos.nivelBloqueado"));
                     }
                 }
             });
-        }
-        List<String> amigos=usuarioAct.getAmigos();
-        tablaContenido.add(new Label("Mis amigos:",skin)).colspan(3).left().padBottom(6f).row();
-        if(amigos.isEmpty()){
-            tablaContenido.add(new Label("Sin amigos todavia",skin)).colspan(3).left().row();
-        }else{
-            tablaContenido.add(new Label("Usuario",skin)).left().expandX().padBottom(4f);
-            tablaContenido.add(new Label("Puntos",skin)).left().padBottom(4f);
-            tablaContenido.add().row();
-            List<String> amigosOrdenados=new java.util.ArrayList<>(amigos);
-            amigosOrdenados.sort((a,b)->
-                gestorUsuarios.getPuntuacionDeUsuario(b)-gestorUsuarios.getPuntuacionDeUsuario(a));
-            int posicion=1;
-            for(String usernameAmigo:amigosOrdenados){
-                int puntos=gestorUsuarios.getPuntuacionDeUsuario(usernameAmigo);
-                tablaContenido.add(new Label(posicion+". "+usernameAmigo,skin)).left().padBottom(4f);
-                tablaContenido.add(new Label(""+puntos,skin)).left().padBottom(4f);
-                tablaContenido.add().row();
-                posicion++;
-            }
         }
         ScrollPane scroll=new ScrollPane(tablaContenido,skin);
         scroll.setFadeScrollBars(true);
@@ -213,7 +210,7 @@ public class PantallaAmigos implements Screen{
         tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+8f).row();
         tablaRaiz.add(scroll).width(panelAncho*0.82f).maxHeight(altoTotal*0.62f).row();
         tablaRaiz.add().height(10f).row();
-        TextButton btnVolver=new TextButton("Volver al menu",skin);
+        TextButton btnVolver=new TextButton(idiomas.get("retos.btn.volver"),skin);
         btnVolver.setColor(EstiloUI.BTN_AZUL);
         tablaRaiz.add(btnVolver).width(panelAncho*0.45f).height(36f).row();
         escenario.addActor(tablaRaiz);
@@ -224,3 +221,4 @@ public class PantallaAmigos implements Screen{
         });
     }
 }
+

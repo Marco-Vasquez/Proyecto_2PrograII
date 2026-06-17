@@ -27,6 +27,10 @@ public class Usuario implements Serializable{
     private List<String> amigos;
     private Perfil perfil;
     private Estadisticas estadisticas;
+    private List<SolicitudAmistad> solicitudesRecibidas;
+    private List<SolicitudAmistad> solicitudesEnviadas;
+    private List<RetoCompetitivo> retos;
+    private List<RetoCompetitivo> retosRecibidos;
 
     public Usuario(String username, String password, String salt, String nombreCompleto){
         this.username = username;
@@ -37,6 +41,10 @@ public class Usuario implements Serializable{
         this.ultimaSesion = LocalDateTime.now();
         this.nivelDesbloqueado = 1;
         this.amigos = new ArrayList<>();
+        this.solicitudesRecibidas=new ArrayList<>();
+        this.solicitudesEnviadas=new ArrayList<>();
+        this.retos=new ArrayList<>();
+        this.retosRecibidos=new ArrayList<>();
         this.perfil = new Perfil();
         this.estadisticas = new Estadisticas();
     }
@@ -109,5 +117,35 @@ public class Usuario implements Serializable{
     
     public String toString(){
         return "Usuario{username="+username+", nombre="+nombreCompleto+", registro="+fechaRegistro.toLocalDate()+", nivelDesbloqueado="+nivelDesbloqueado+", partidas="+estadisticas.getPartidasJugadas()+"}";
+    }
+    public List<SolicitudAmistad> getSolicitudesRecibidas(){
+        if(solicitudesRecibidas==null) solicitudesRecibidas=new ArrayList<>();
+        return solicitudesRecibidas;
+    }
+    public List<SolicitudAmistad> getSolicitudesEnviadas(){
+        if(solicitudesEnviadas==null) solicitudesEnviadas=new ArrayList<>();
+        return solicitudesEnviadas;
+    }
+    public boolean tieneSolicitudPendienteDe(String username){
+        if(solicitudesRecibidas==null) return false;
+        for(SolicitudAmistad s:solicitudesRecibidas){
+            if(s.getEmisor().equals(username)&&s.isPendiente()) return true;
+        }
+        return false;
+    }
+    public boolean yaEnvioSolicitudA(String username){
+        if(solicitudesEnviadas==null) return false;
+        for(SolicitudAmistad s:solicitudesEnviadas){
+            if(s.getReceptor().equals(username)&&s.isPendiente()) return true;
+        }
+        return false;
+    }
+    public List<RetoCompetitivo> getRetos(){
+        if(retos==null) retos=new ArrayList<>();
+        return retos;
+    }
+    public List<RetoCompetitivo> getRetosRecibidos(){
+        if(retosRecibidos==null) retosRecibidos=new ArrayList<>();
+        return retosRecibidos;
     }
 }

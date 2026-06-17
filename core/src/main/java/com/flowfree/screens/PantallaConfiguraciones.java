@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.flowfree.FlowFreeGame;
+import com.flowfree.data.GestorIdiomas;
 import com.flowfree.data.GestorMusica;
 import com.flowfree.data.GestorUsuarios;
 import com.flowfree.model.Perfil;
@@ -37,6 +38,7 @@ public class PantallaConfiguraciones implements Screen{
     private TextButton btnMusica;
     private TextButton btnIdioma;
     private Label labelVolumenValor;
+    private GestorIdiomas idiomas;
     public PantallaConfiguraciones(FlowFreeGame juego,Usuario usuarioAct){
         this.juego=juego;
         this.usuarioAct=usuarioAct;
@@ -45,6 +47,7 @@ public class PantallaConfiguraciones implements Screen{
     public void show(){
         skin=new Skin(Gdx.files.internal("ui/uiskin.json"));
         dibujador=new ShapeRenderer();
+        idiomas=GestorIdiomas.getInstance();
         construirEscenario();
     }
     public void render(float delta){
@@ -146,34 +149,38 @@ public class PantallaConfiguraciones implements Screen{
         ScrollPane scroll=new ScrollPane(tablaContenido,skin);
         scroll.setFadeScrollBars(true);
         scroll.setScrollingDisabled(true,false);
-        float altoTotal=Gdx.graphics.getHeight();
         Table tablaRaiz=new Table();
         tablaRaiz.setFillParent(true);
         tablaRaiz.center();
         tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+8f).row();
-        tablaRaiz.add(scroll).width(panelAncho*0.80f).maxHeight(altoTotal*0.65f).row();
+        tablaRaiz.add(scroll).width(panelAncho*0.80f).maxHeight(Gdx.graphics.getHeight()*0.65f).row();
         escenario.addActor(tablaRaiz);
         sliderVolumen.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
                 float val=sliderVolumen.getValue();
                 labelVolumenValor.setText(String.format("%d%%",(int)(val*100)));
+                perfil.setVolumen(val);
                 gestor.aplicarConfiguracion(val,perfil.isMusicaActiva());
             }
         });
         btnMusica.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
-                boolean nuevoEstado=!perfil.isMusicaActiva();
-                perfil.setMusicaActiva(nuevoEstado);
-                btnMusica.setText(nuevoEstado ? "Activada" : "Desactivada");
-                btnMusica.setColor(nuevoEstado ? EstiloUI.BTN_VERDE : EstiloUI.BTN_ROJO);
-                gestor.aplicarConfiguracion(sliderVolumen.getValue(),nuevoEstado);
+                boolean nuevo=!perfil.isMusicaActiva();
+                perfil.setMusicaActiva(nuevo);
+                btnMusica.setText(nuevo ? "Activada" : "Desactivada");
+                btnMusica.setColor(nuevo ? EstiloUI.BTN_VERDE : EstiloUI.BTN_ROJO);
+                gestor.aplicarConfiguracion(sliderVolumen.getValue(),nuevo);
             }
         });
         btnIdioma.addListener(new ChangeListener(){
             public void changed(ChangeEvent evento,Actor actor){
-                boolean nuevoIdioma=!perfil.isIdiomaEspanol();
-                perfil.setIdiomaEspanol(nuevoIdioma);
-                btnIdioma.setText(nuevoIdioma ? "Espanol" : "English");
+                boolean nuevo=!perfil.isIdiomaEspanol();
+                perfil.setIdiomaEspanol(nuevo);
+                btnIdioma.setText(nuevo ? "Espanol" : "English");
+
+                GestorIdiomas.getInstance().setEspanol(nuevo);
+
+                juego.setScreen(new PantallaMenu(juego,usuarioAct));
             }
         });
         btnGuardar.addListener(new ChangeListener(){
@@ -181,6 +188,7 @@ public class PantallaConfiguraciones implements Screen{
                 perfil.setVolumen(sliderVolumen.getValue());
                 gestorUsuarios.guardarUser(usuarioAct);
                 gestor.aplicarConfiguracion(perfil.getVolumen(),perfil.isMusicaActiva());
+                juego.setScreen(new PantallaMenu(juego,usuarioAct));
             }
         });
         btnVolver.addListener(new ChangeListener(){

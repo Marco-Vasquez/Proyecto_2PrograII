@@ -14,10 +14,12 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.flowfree.FlowFreeGame;
+import com.flowfree.data.GestorIdiomas;
 import com.flowfree.data.GestorUsuarios;
 import com.flowfree.data.HashUtil;
 import com.flowfree.exceptions.InvalidPasswordException;
 import com.flowfree.exceptions.UserExistenteException;
+import com.flowfree.model.Perfil;
 import com.flowfree.model.Usuario;
 /**
  *
@@ -244,7 +246,11 @@ public class PantallaLogin implements Screen {
         GestorUsuarios.ResultadoLogin estado=gestorUsuarios.iniciarSesion(username,password,resultado);
         switch(estado){
             case EXITO:
-                juego.setScreen(new PantallaMenu(juego,resultado[0]));
+                Usuario usuario=resultado[0];
+                Perfil perfil=usuario.getPerfil();
+                GestorIdiomas.getInstance().setEspanol(perfil.isIdiomaEspanol());
+                com.flowfree.data.GestorMusica.getInstance().aplicarConfiguracion(perfil.getVolumen(), perfil.isMusicaActiva());
+                juego.setScreen(new PantallaMenu(juego, usuario));
                 break;
             case USUARIO_NO_EXISTE:
                 mensajeEstado.setText("El usuario no existe");

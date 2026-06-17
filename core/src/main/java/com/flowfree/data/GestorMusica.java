@@ -20,9 +20,7 @@ public class GestorMusica{
         activa=true;
     }
     public static GestorMusica getInstance(){
-        if(instancia==null){
-            instancia=new GestorMusica();
-        }
+        if(instancia==null) instancia=new GestorMusica();
         return instancia;
     }
     public void inicializar(){
@@ -33,28 +31,21 @@ public class GestorMusica{
         if(activa) musicaFondo.play();
     }
     public void aplicarConfiguracion(float nuevoVolumen,boolean nuevaActiva){
-        volumen=nuevoVolumen;
+        volumen=Math.max(0f,Math.min(1f,nuevoVolumen));
         activa=nuevaActiva;
-        if(musicaFondo==null){
-            return;
-        }
+        if(musicaFondo==null) return;
         musicaFondo.setVolume(volumen);
         if(activa&&!musicaFondo.isPlaying()){
             musicaFondo.play();
-        }
-        else if(!activa&&musicaFondo.isPlaying()){
+        }else if(!activa&&musicaFondo.isPlaying()){
             musicaFondo.pause();
         }
     }
     public void pausar(){
-        if(musicaFondo!=null&&musicaFondo.isPlaying()){
-            musicaFondo.pause();
-        }
+        if(musicaFondo!=null&&musicaFondo.isPlaying()) musicaFondo.pause();
     }
     public void reanudar(){
-        if(musicaFondo!=null&&activa&&!musicaFondo.isPlaying()){
-            musicaFondo.play();
-        }
+        if(musicaFondo!=null&&activa&&!musicaFondo.isPlaying()) musicaFondo.play();
     }
     public void dispose(){
         if(musicaFondo!=null){
