@@ -16,9 +16,11 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.flowfree.FlowFreeGame;
+import com.flowfree.data.GestorIdiomas;
 import com.flowfree.game.GestorNiveles;
 import com.flowfree.model.Nivel;
 import com.flowfree.model.Usuario;
+import java.text.MessageFormat;
 /**
  *
  * @author andres
@@ -35,6 +37,7 @@ public class PantallaNiveles implements Screen{
     private static final float ENC_MARGEN_TOP=14f;
     private static final float RADIO_CIRC=20f;
     private static final Color COLOR_BLOQUEADO=new Color(0.40f,0.40f,0.40f,1f);
+    private GestorIdiomas idiomas=GestorIdiomas.getInstance();
     public PantallaNiveles(FlowFreeGame juego,Usuario usuarioAct){
         this.juego=juego;
         this.usuarioAct=usuarioAct;
@@ -110,7 +113,7 @@ public class PantallaNiveles implements Screen{
         Table tablaEnc=new Table();
         tablaEnc.setPosition(encX,encY);
         tablaEnc.setSize(encAncho,ENC_ALTO);
-        tablaEnc.add(new Label("Flow Free",skin)).center().expand();
+        tablaEnc.add(new Label(idiomas.get("app.titulo"),skin)).center().expand();
         escenario.addActor(tablaEnc);
         float anchoBTN=panelAncho*0.52f;
         float altoBTN=42f;
@@ -122,7 +125,7 @@ public class PantallaNiveles implements Screen{
         tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+10f).row();
         for(int posicion=0;posicion<todosLosNiveles.length;posicion++){
             Nivel nivel=todosLosNiveles[posicion];
-            String textoBoton="Nivel "+nivel.getNumNivel()+" - "+nivel.getDificultad();
+            String textoBoton=MessageFormat.format(idiomas.get("niveles.boton"), nivel.getNumNivel(), idiomas.get(nivel.getDificultad()));
             TextButton botonNivel=new TextButton(textoBoton,skin);
             final Color colorFijo=nivel.isDesbloqueado()
                 ? new Color(EstiloUI.BTN_VERDE)
@@ -142,23 +145,23 @@ public class PantallaNiveles implements Screen{
             final int numNivel=nivel.getNumNivel();
             final boolean desbloqueado=nivel.isDesbloqueado();
             botonNivel.addListener(new ChangeListener(){
-                public void changed(ChangeEvent evento,Actor actor){
+                public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                     if(desbloqueado){
                         juego.setScreen(new PantallaJuego(juego,usuarioAct,numNivel));
                     }
                 }
             });
         }
-        Label labelPista=new Label("Completa el nivel anterior para desbloquear el siguiente",skin);
+        Label labelPista=new Label(idiomas.get("niveles.pista"),skin);
         labelPista.setWrap(true);
         tablaRaiz.add(labelPista).width(anchoBTN).center().row();
         tablaRaiz.add().height(14f).row();
-        TextButton btnVolver=new TextButton("Volver al menu",skin);
+        TextButton btnVolver=new TextButton(idiomas.get("niveles.btn.volver"),skin);
         btnVolver.setColor(EstiloUI.BTN_AZUL);
         tablaRaiz.add(btnVolver).width(anchoBTN*0.7f).height(36f).row();
         escenario.addActor(tablaRaiz);
         btnVolver.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaMenu(juego,usuarioAct));
             }
         });

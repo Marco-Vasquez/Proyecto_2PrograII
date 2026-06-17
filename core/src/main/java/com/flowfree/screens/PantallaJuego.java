@@ -63,6 +63,7 @@ public class PantallaJuego implements Screen{
     private boolean modalMostrado=false;
     private com.flowfree.hilos.TimerJuego timerHilo;
     private com.flowfree.hilos.AutoSave autoSave;
+    protected boolean modoReto=false;
     private GestorIdiomas idiomas=GestorIdiomas.getInstance();
     public PantallaJuego(FlowFreeGame juego,Usuario usuarioAct,int numNivel){
         this.juego=juego;
@@ -165,9 +166,9 @@ public class PantallaJuego implements Screen{
         float margenArriba=Gdx.graphics.getHeight()-(panelY+panelAlto)+8f;
         tablaRaiz.add(new Label(idiomas.get("app.titulo"),skin))
             .colspan(3).center().padTop(margenArriba).height(ALTO_ENC).row();
-        tablaRaiz.add().expandY().row();
+        tablaRaiz.add().expandY().colspan(3).row();
         Table tablaHUD=new Table();
-        tablaHUD.bottom().padBottom(panelY+6f).padLeft(panelX+10f).padRight(panelX+10f);
+        tablaHUD.bottom().padBottom(panelY+6f);
         labelNivel=new Label(MessageFormat.format(idiomas.get("juego.label.nivel"), numNivelInicial),skin);
         labelTimer=new Label("00:00",skin);
         labelMov=new Label(MessageFormat.format(idiomas.get("juego.mov"), 0),skin);
@@ -179,20 +180,20 @@ public class PantallaJuego implements Screen{
         btnLimpiar.setColor(EstiloUI.BTN_NARANJA);
         btnDeshacer.setColor(EstiloUI.BTN_AMARILLO);
         Table tablaCentro=new Table();
-        tablaCentro.add(labelNivel).padRight(12);
-        tablaCentro.add(labelTimer).padRight(12);
-        tablaCentro.add(labelMov).padRight(12);
+        tablaCentro.add(labelNivel).padRight(30);
+        tablaCentro.add(labelTimer).padRight(30);
+        tablaCentro.add(labelMov).padRight(30);
         tablaCentro.add(labelFails);
         Table tablaBotones=new Table();
         tablaBotones.add(btnDeshacer).width(76).height(28).padRight(4);
         tablaBotones.add(btnLimpiar).width(70).height(28).padRight(4);
         tablaBotones.add(btnMenu).width(58).height(28);
-        tablaHUD.add(new Label(usuarioAct.getUsername(),skin)).left().expandX();
-        tablaHUD.add(tablaCentro).center().expandX();
-        tablaHUD.add(tablaBotones).right().expandX();
+        tablaHUD.add(new Label(usuarioAct.getUsername(),skin)).left().padLeft(10);
+        tablaHUD.add(tablaCentro).expandX().center();
+        tablaHUD.add(tablaBotones).right().padRight(10);
         tablaHUD.row();
         tablaHUD.add(labelMsj).colspan(3).center().padTop(2);
-        tablaRaiz.add(tablaHUD).bottom().row();
+        tablaRaiz.add(tablaHUD).bottom().colspan(3).row();
         escenario.addActor(tablaRaiz);
         btnMenu.addListener(new ChangeListener(){
             public void changed(ChangeListener.ChangeEvent evento,Actor actor){
@@ -267,7 +268,7 @@ public class PantallaJuego implements Screen{
         int puntos=calcularPuntos();
         boolean esUltimo=nivelActual==gestorNiveles.getTotalNiveles();
         float anchoModal=340f;
-        float altoModal=esUltimo ? 260f : 300f;
+        float altoModal=modoReto ? 280f : (esUltimo ? 260f : 300f);
         float modalX=(escenario.getWidth()-anchoModal)/2f;
         float modalY=(escenario.getHeight()-altoModal)/2f;
         Table fondo=new Table();
@@ -277,9 +278,11 @@ public class PantallaJuego implements Screen{
         Table modal=new Table(skin);
         modal.setBackground(skin.newDrawable("white",EstiloUI.PANEL));
         modal.setBounds(modalX,modalY,anchoModal,altoModal);
-        String tituloTexto=esUltimo
-            ? idiomas.get("juego.victoria.todos")
-            : MessageFormat.format(idiomas.get("juego.label.nivel"), nivelActual) + " " + idiomas.get("juego.victoria.nivel");
+        String tituloTexto=modoReto
+            ? idiomas.get("retos.titulo")
+            : (esUltimo
+                ? idiomas.get("juego.victoria.todos")
+                : MessageFormat.format(idiomas.get("juego.label.nivel"), nivelActual) + " " + idiomas.get("juego.victoria.nivel"));
         modal.add(new Label(tituloTexto,skin)).colspan(2).center().padTop(14f).padBottom(14f).row();
         modal.add(new Label(idiomas.get("juego.victoria.tiempo"),skin)).left().padRight(16f).padBottom(6f);
         modal.add(new Label(String.format("%02d:%02d",segundos/60,segundos%60),skin)).left().padBottom(6f).row();
@@ -296,11 +299,22 @@ public class PantallaJuego implements Screen{
         btnReintentar.setColor(EstiloUI.BTN_AMARILLO);
         btnMapa.setColor(EstiloUI.BTN_AZUL);
         float anchoBTN=anchoModal*0.72f;
-        if(!esUltimo){
+        if(!modoReto&&!esUltimo){
             modal.add(btnSiguienteModal).colspan(2).width(anchoBTN).height(34f).padBottom(6f).row();
         }
         modal.add(btnReintentar).colspan(2).width(anchoBTN).height(34f).padBottom(6f).row();
-        modal.add(btnMapa).colspan(2).width(anchoBTN).height(34f).padBottom(14f).row();
+        if(!modoReto){
+            modal.add(btnMapa).colspan(2).width(anchoBTN).height(34f).padBottom(14f).row();
+        }else{
+            TextButton btnMenuReto=new TextButton(idiomas.get("juego.btn.menu"),skin);
+            btnMenuReto.setColor(EstiloUI.BTN_AZUL);
+            modal.add(btnMenuReto).colspan(2).width(anchoBTN).height(34f).padBottom(14f).row();
+            btnMenuReto.addListener(new ChangeListener(){
+                public void changed(ChangeListener.ChangeEvent evento,Actor actor){
+                    juego.setScreen(new PantallaMenu(juego,usuarioAct));
+                }
+            });
+        }
         escenario.addActor(modal);
         final int numSiguiente=nivelActual+1;
         btnSiguienteModal.addListener(new ChangeListener(){

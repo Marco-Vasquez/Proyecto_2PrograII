@@ -25,6 +25,7 @@ public class PantallaJuegoReto extends PantallaJuego{
         this.reto=reto;
         this.gestorRetos=gestorRetos;
         this.esRetador=reto.getRetador().equals(usuarioAct.getUsername());
+        this.modoReto=true;
     }
     protected void alCompletarNivel(long tiempo,int movimientos,int fallos){
         if(retoRegistrado) return;
@@ -36,7 +37,7 @@ public class PantallaJuegoReto extends PantallaJuego{
                 tiempo,movimientos,fallos);
         }else{
             gestorRetos.aceptarYCompletarReto(getUsuarioAct(),reto,tiempo,movimientos,fallos);
-            mostrarResultadoReto(tiempo);
+            mostrarResultadoReto(reto);
         }
     }
     private int indiceRetador(){
@@ -49,8 +50,8 @@ public class PantallaJuegoReto extends PantallaJuego{
         }
         return lista.size()-1;
     }
-    private void mostrarResultadoReto(long tiempoRetado){
-        String ganador=reto.getGanador();
+    private void mostrarResultadoReto(RetoCompetitivo retoFinal){
+        String ganador=retoFinal.getGanador();
         String username=getUsuarioAct().getUsername();
         GestorIdiomas idiomas=GestorIdiomas.getInstance();
         String mensaje;

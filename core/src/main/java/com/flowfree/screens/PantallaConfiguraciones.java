@@ -179,6 +179,7 @@ public class PantallaConfiguraciones implements Screen{
                 btnIdioma.setText(nuevo ? idiomas.get("config.idioma.es") : idiomas.get("config.idioma.en"));
 
                 GestorIdiomas.getInstance().setEspanol(nuevo);
+                gestorUsuarios.guardarUser(usuarioAct);
 
                 juego.setScreen(new PantallaMenu(juego,usuarioAct));
             }

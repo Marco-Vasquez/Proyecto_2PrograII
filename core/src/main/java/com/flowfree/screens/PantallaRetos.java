@@ -224,4 +224,3 @@ public class PantallaRetos implements Screen{
         });
     }
 }
-

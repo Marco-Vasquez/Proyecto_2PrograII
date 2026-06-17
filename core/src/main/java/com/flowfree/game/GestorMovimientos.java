@@ -210,6 +210,22 @@ public class GestorMovimientos {
         historialTrazos.clear();
         historialColores.clear();
     }
+    public boolean deshacerTrazoPausado(){
+        if(caminoPausado.isEmpty()) return false;
+        for(int posicion=caminoPausado.size()-1;posicion>0;posicion--){
+            int[] celda=caminoPausado.get(posicion);
+            int[] anterior=caminoPausado.get(posicion-1);
+            desconectarCeldas(anterior[0],anterior[1],celda[0],celda[1]);
+            if(tablero.getEstado(celda[0],celda[1])==EstadoCelda.CAMINO){
+                tablero.borrarCelda(celda[0],celda[1]);
+            }
+        }
+        int[] primeraCelda=caminoPausado.get(0);
+        tablero.limpiarConexiones(primeraCelda[0],primeraCelda[1]);
+        caminoPausado.clear();
+        colorPausado=0;
+        return true;
+    }
     private void conectarCeldas(int filaA,int colA,int filaB,int colB){
         if(filaB==filaA-1){
             tablero.agregarConexion(filaA,colA,Tablero.CON_ARRIBA);

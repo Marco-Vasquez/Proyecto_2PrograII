@@ -89,6 +89,11 @@ public class FlowFree extends Juego {
             if(resultado) verificarEstadoNivel();
             return resultado;
         }
+        if(gestorMovimientos.hayTrazoPausado()){
+            boolean resultado=gestorMovimientos.deshacerTrazoPausado();
+            if(resultado) verificarEstadoNivel();
+            return resultado;
+        }
         boolean resultado=gestorMovimientos.deshacerUltimoTrazoCompleto();
         if(resultado) verificarEstadoNivel();
         return resultado;

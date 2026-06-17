@@ -35,6 +35,7 @@ public class PantallaInicio implements Screen{
     public void show(){
         skin=new Skin(Gdx.files.internal("ui/uiskin.json"));
         dibujador=new ShapeRenderer();
+        idiomas.setEspanol(true);
         construirEscenario();
     }
     public void render(float delta){

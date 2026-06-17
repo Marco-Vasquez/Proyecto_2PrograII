@@ -15,6 +15,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.flowfree.FlowFreeGame;
+import com.flowfree.data.GestorIdiomas;
 import com.flowfree.data.GestorUsuarios;
 import com.flowfree.model.Usuario;
 /**
@@ -42,6 +43,7 @@ public class PantallaPerfil implements Screen{
         new Color(0.95f,0.52f,0.08f,1f)
     };
     private int avatarSeleccionado;
+    private GestorIdiomas idiomas=GestorIdiomas.getInstance();
     private float avatarGrandeX;
     private float avatarGrandeY;
     public PantallaPerfil(FlowFreeGame juego,Usuario usuarioAct){
@@ -131,21 +133,21 @@ public class PantallaPerfil implements Screen{
         Table tablaEnc=new Table();
         tablaEnc.setPosition(encX,encY);
         tablaEnc.setSize(encAncho,ENC_ALTO);
-        tablaEnc.add(new Label("Flow Free",skin)).center().expand();
+        tablaEnc.add(new Label(idiomas.get("app.titulo"),skin)).center().expand();
         escenario.addActor(tablaEnc);
         float espacioAvatar=RADIO_AVATAR_GRANDE*2+24f;
         Table tablaContenido=new Table();
         tablaContenido.pad(12f);
         tablaContenido.add().height(espacioAvatar).colspan(2).row();
-        tablaContenido.add(new Label("Perfil de usuario",skin)).colspan(2).center().padBottom(14f).row();
-        agregarFila(tablaContenido,"Username:",usuarioAct.getUsername());
-        agregarFila(tablaContenido,"Nombre:",usuarioAct.getNombreCompleto());
-        agregarFila(tablaContenido,"Nivel desbloqueado:",""+usuarioAct.getNivelDesbloqueado());
+        tablaContenido.add(new Label(idiomas.get("perfil.titulo"),skin)).colspan(2).center().padBottom(14f).row();
+        agregarFila(tablaContenido,idiomas.get("perfil.username"),usuarioAct.getUsername());
+        agregarFila(tablaContenido,idiomas.get("perfil.nombre"),usuarioAct.getNombreCompleto());
+        agregarFila(tablaContenido,idiomas.get("perfil.nivel"),""+usuarioAct.getNivelDesbloqueado());
         String fechaReg=usuarioAct.getFechaRegistro().toLocalDate().toString();
-        agregarFila(tablaContenido,"Registrado:",fechaReg);
+        agregarFila(tablaContenido,idiomas.get("perfil.registro"),fechaReg);
         String ultimaSesion=usuarioAct.getUltimaSesion().toLocalDate().toString();
-        agregarFila(tablaContenido,"Ultima sesion:",ultimaSesion);
-        tablaContenido.add(new Label("Cambiar avatar:",skin)).left().padTop(14f).padBottom(8f).colspan(2).row();
+        agregarFila(tablaContenido,idiomas.get("perfil.sesion"),ultimaSesion);
+        tablaContenido.add(new Label(idiomas.get("perfil.avatar"),skin)).left().padTop(14f).padBottom(8f).colspan(2).row();
         Table tablaAvatares=new Table();
         for(int posicion=0;posicion<COLORES_AVATAR.length;posicion++){
             final int indice=posicion;
@@ -153,7 +155,7 @@ public class PantallaPerfil implements Screen{
             btnAvatar.setColor(COLORES_AVATAR[posicion]);
             tablaAvatares.add(btnAvatar).width(44f).height(44f).padRight(8f);
             btnAvatar.addListener(new ChangeListener(){
-                public void changed(ChangeEvent evento,Actor actor){
+                public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                     avatarSeleccionado=indice;
                     usuarioAct.getPerfil().setAvatarIndex(indice);
                     gestorUsuarios.guardarUser(usuarioAct);
@@ -171,12 +173,12 @@ public class PantallaPerfil implements Screen{
         tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+8f).row();
         tablaRaiz.add(scroll).width(panelAncho*0.80f).maxHeight(altoTotal*0.65f).row();
         tablaRaiz.add().height(10f).row();
-        TextButton btnVolver=new TextButton("Volver al menu",skin);
+        TextButton btnVolver=new TextButton(idiomas.get("perfil.btn.volver"),skin);
         btnVolver.setColor(EstiloUI.BTN_AZUL);
         tablaRaiz.add(btnVolver).width(panelAncho*0.45f).height(36f).row();
         escenario.addActor(tablaRaiz);
         btnVolver.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaMenu(juego,usuarioAct));
             }
         });
