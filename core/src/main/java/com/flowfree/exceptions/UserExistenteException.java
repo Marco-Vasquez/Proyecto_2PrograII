@@ -23,7 +23,10 @@ public class UserExistenteException extends Exception{
      *
      * @param username the detail message.
      */
+    private String username;
     public UserExistenteException(String username) {
-        super("El usuario '"+username+"' ya existe");
+        super("login.error.usuario.existe");
+        this.username=username;
     }
+    public String getUsernameExistente(){return username;}
 }

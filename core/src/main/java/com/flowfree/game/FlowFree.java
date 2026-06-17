@@ -23,12 +23,14 @@ public class FlowFree extends Juego {
     public FlowFree(){
         super("Flow Free");
     }
-    public void cargarNivel(Nivel nivel){
+    public boolean cargarNivel(Nivel nivel){
+        if(nivel==null) return false;
         this.nivelActivo=nivel;
         this.nivelAct=nivel.getNumNivel();
         this.tablero=nivel.crearTablero();
         this.gestorMovimientos=new GestorMovimientos(tablero);
         iniciar();
+        return true;
     }
     public void iniciar(){
         movimientos=0;
@@ -60,7 +62,9 @@ public class FlowFree extends Juego {
     public boolean continuarTrazo(int fila,int columna){
         if(enPausa||nivelCompleto) return false;
         boolean exito=gestorMovimientos.continuarTrazo(fila,columna);
-        if(exito) movimientos++;
+        if(exito&&gestorMovimientos.getUltimoResultado()!=GestorMovimientos.ResultadoTrazo.RETROCEDIO){
+            movimientos++;
+        }
         if(gestorMovimientos.getUltimoResultado()==GestorMovimientos.ResultadoTrazo.BLOQUEADO){
             fallos++;
         }
@@ -99,7 +103,7 @@ public class FlowFree extends Juego {
     private int contarCaminosCompletos(){
         int completos=0;
         for(int color=1;color<=tablero.getTotalColores();color++){
-            if(colorTieneDosOrigenes(color)&&colorTieneCamino(color)){
+            if(colorTieneDosOrigenes(color)&&coloresConectados(color)){
                 completos++;
             }
         }
@@ -116,14 +120,41 @@ public class FlowFree extends Juego {
         }
         return conteo==2;
     }
-    private boolean colorTieneCamino(int color){
+    private boolean coloresConectados(int color){
+        int[][] origenes=new int[2][2];
+        int encontrados=0;
         for(int fila=0;fila<tablero.getFilas();fila++){
             for(int columna=0;columna<tablero.getColumnas();columna++){
-                if(tablero.getColor(fila,columna)==color
-                        &&tablero.getEstado(fila,columna)==EstadoCelda.CAMINO){
-                    return true;
+                if(tablero.getColor(fila,columna)==color&&tablero.isPuntoOrigen(fila,columna)){
+                    if(encontrados<2){
+                        origenes[encontrados][0]=fila;
+                        origenes[encontrados][1]=columna;
+                        encontrados++;
+                    }
                 }
             }
+        }
+        if(encontrados!=2) return false;
+        boolean[][] visitado=new boolean[tablero.getFilas()][tablero.getColumnas()];
+        return dfsConexion(origenes[0][0],origenes[0][1],origenes[1][0],origenes[1][1],color,visitado);
+    }
+    private boolean dfsConexion(int fila,int col,int objFila,int objCol,int color,boolean[][] visitado){
+        if(fila==objFila&&col==objCol) return true;
+        if(!tablero.dentroDelTablero(fila,col)) return false;
+        if(visitado[fila][col]) return false;
+        if(tablero.getColor(fila,col)!=color) return false;
+        visitado[fila][col]=true;
+        if(tablero.tieneConexion(fila,col,Tablero.CON_ARRIBA)){
+            if(dfsConexion(fila-1,col,objFila,objCol,color,visitado)) return true;
+        }
+        if(tablero.tieneConexion(fila,col,Tablero.CON_ABAJO)){
+            if(dfsConexion(fila+1,col,objFila,objCol,color,visitado)) return true;
+        }
+        if(tablero.tieneConexion(fila,col,Tablero.CON_IZQ)){
+            if(dfsConexion(fila,col-1,objFila,objCol,color,visitado)) return true;
+        }
+        if(tablero.tieneConexion(fila,col,Tablero.CON_DER)){
+            if(dfsConexion(fila,col+1,objFila,objCol,color,visitado)) return true;
         }
         return false;
     }

@@ -26,7 +26,7 @@ public class GestorNiveles {
             {2,1, 4,4, 2},
             {2,2, 3,4, 3},
             {2,4, 4,1, 4}
-        },"Facil");
+        },"dificultad.facil");
 
         niveles[1]=new Nivel(2,6,6,new int[][]{
             {0,0, 1,2, 4},
@@ -35,7 +35,7 @@ public class GestorNiveles {
             {1,0, 1,3, 6},
             {3,1, 4,4, 3},
             {3,2, 4,1, 2}
-        },"Facil");
+        },"dificultad.facil");
 
         niveles[2]=new Nivel(3,7,7,new int[][]{
             {0,6, 6,5, 2},
@@ -44,7 +44,7 @@ public class GestorNiveles {
             {3,3, 4,2, 4},
             {3,4, 6,6, 5},
             {4,4, 5,5, 3}
-        },"Medio");
+        },"dificultad.medio");
 
         niveles[3]=new Nivel(4,8,8,new int[][]{
             {0,0, 1,1, 4},
@@ -53,7 +53,7 @@ public class GestorNiveles {
             {0,7, 2,0, 2},
             {1,6, 5,2, 3},
             {2,1, 2,6, 6}
-        },"MedioDificil");
+        },"dificultad.medioDificil");
 
          niveles[4]=new Nivel(5,9,9,new int[][]{
             {0,0, 3,7, 5},
@@ -64,7 +64,7 @@ public class GestorNiveles {
             {4,1, 4,5, 2},
             {4,7, 5,5, 1},
             {5,7, 7,3, 4}
-        },"Dificil");
+        },"dificultad.dificil");
     }
 
     public Nivel getNivel(int numNivel){

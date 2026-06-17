@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.flowfree.FlowFreeGame;
+import com.flowfree.data.GestorIdiomas;
 import com.flowfree.data.GestorUsuarios;
 import com.flowfree.model.Estadisticas;
 import com.flowfree.model.Usuario;
@@ -32,6 +33,7 @@ public class PantallaEstadisticas implements Screen{
     private static final float ENC_ALTO=52f;
     private static final float ENC_MARGEN_TOP=14f;
     private static final float RADIO_CIRC=20f;
+    private GestorIdiomas idiomas=GestorIdiomas.getInstance();
     private static final float ANCHO_ETIQUETA=180f;
     private static final float ANCHO_VALOR=120f;
     public PantallaEstadisticas(FlowFreeGame juego,Usuario usuarioAct){
@@ -107,32 +109,32 @@ public class PantallaEstadisticas implements Screen{
         Table tablaEnc=new Table();
         tablaEnc.setPosition(encX,encY);
         tablaEnc.setSize(encAncho,ENC_ALTO);
-        tablaEnc.add(new Label("Flow Free",skin)).center().expand();
+        tablaEnc.add(new Label(idiomas.get("app.titulo"),skin)).center().expand();
         escenario.addActor(tablaEnc);
         Estadisticas stats=usuarioAct.getEstadisticas();
         long segTotales=stats.getTiempoTotalSeg();
         double promedio=stats.getTiempoPromedioPorNivel();
         Table tablaContenido=new Table();
         tablaContenido.pad(12f).left();
-        agregarFila(tablaContenido,"Usuario:",usuarioAct.getUsername());
-        agregarFila(tablaContenido,"Partidas jugadas:",""+stats.getPartidasJugadas());
-        agregarFila(tablaContenido,"Niveles completados:",""+stats.getNivelesCompletados());
-        agregarFila(tablaContenido,"Tiempo total:",formatTiempo(segTotales));
-        agregarFila(tablaContenido,"Tiempo promedio:",formatTiempo((long)promedio));
-        agregarFila(tablaContenido,"Movimientos totales:",""+stats.getTotalMovimientos());
-        agregarFila(tablaContenido,"Fallos totales:",""+stats.getTotalFallos());
-        agregarFila(tablaContenido,"Puntuacion general:",""+stats.getPuntuacionGeneral());
-        tablaContenido.add(new Label("Historial de partidas:",skin))
+        agregarFila(tablaContenido,idiomas.get("stats.usuario"),usuarioAct.getUsername());
+        agregarFila(tablaContenido,idiomas.get("stats.partidas"),""+stats.getPartidasJugadas());
+        agregarFila(tablaContenido,idiomas.get("stats.niveles"),""+stats.getNivelesCompletados());
+        agregarFila(tablaContenido,idiomas.get("stats.tiempo.total"),formatTiempo(segTotales));
+        agregarFila(tablaContenido,idiomas.get("stats.tiempo.promedio"),formatTiempo((long)promedio));
+        agregarFila(tablaContenido,idiomas.get("stats.movimientos"),""+stats.getTotalMovimientos());
+        agregarFila(tablaContenido,idiomas.get("stats.fallos"),""+stats.getTotalFallos());
+        agregarFila(tablaContenido,idiomas.get("stats.puntuacion"),""+stats.getPuntuacionGeneral());
+        tablaContenido.add(new Label(idiomas.get("stats.historial"),skin))
             .left().padTop(14f).padBottom(6f).colspan(4).row();
         List<String> historial=stats.getHistorial();
         if(historial.isEmpty()){
-            tablaContenido.add(new Label("Sin partidas registradas",skin)).colspan(4).center().row();
+            tablaContenido.add(new Label(idiomas.get("stats.sinpartidas"),skin)).colspan(4).center().row();
         }else{
-            tablaContenido.add(new Label("Nivel",skin)).width(50f).left().padBottom(4f);
-            tablaContenido.add(new Label("Tiempo",skin)).width(70f).left().padBottom(4f);
-            tablaContenido.add(new Label("Mov",skin)).width(50f).left().padBottom(4f);
-            tablaContenido.add(new Label("Fallos",skin)).width(55f).left().padBottom(4f);
-            tablaContenido.add(new Label("Pts",skin)).width(55f).left().padBottom(4f).row();
+            tablaContenido.add(new Label(idiomas.get("stats.col.nivel"),skin)).width(50f).left().padBottom(4f);
+            tablaContenido.add(new Label(idiomas.get("stats.col.tiempo"),skin)).width(70f).left().padBottom(4f);
+            tablaContenido.add(new Label(idiomas.get("stats.col.mov"),skin)).width(50f).left().padBottom(4f);
+            tablaContenido.add(new Label(idiomas.get("stats.col.fallos"),skin)).width(55f).left().padBottom(4f);
+            tablaContenido.add(new Label(idiomas.get("stats.col.pts"),skin)).width(55f).left().padBottom(4f).row();
             int inicio=Math.max(0,historial.size()-5);
             for(int posicion=inicio;posicion<historial.size();posicion++){
                 String[] partes=parsearHistorial(historial.get(posicion));
@@ -154,12 +156,12 @@ public class PantallaEstadisticas implements Screen{
         tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+8f).row();
         tablaRaiz.add(scroll).width(panelAncho*0.82f).maxHeight(altoTotal*0.62f).row();
         tablaRaiz.add().height(10f).row();
-        TextButton btnVolver=new TextButton("Volver al menu",skin);
+        TextButton btnVolver=new TextButton(idiomas.get("stats.btn.volver"),skin);
         btnVolver.setColor(EstiloUI.BTN_AZUL);
         tablaRaiz.add(btnVolver).width(panelAncho*0.45f).height(36f).row();
         escenario.addActor(tablaRaiz);
         btnVolver.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaMenu(juego,usuarioAct));
             }
         });
@@ -189,10 +191,10 @@ public class PantallaEstadisticas implements Screen{
         GestorUsuarios gestorUsuarios=new GestorUsuarios();
         List<String> amigos=usuarioAct.getAmigos();
         if(amigos.isEmpty()) return;
-        tabla.add(new Label("Ranking con amigos:",skin)).left().padTop(14f).padBottom(6f).colspan(4).row();
-        tabla.add(new Label("Usuario",skin)).width(ANCHO_ETIQUETA).left().padBottom(4f);
-        tabla.add(new Label("Puntuacion",skin)).width(ANCHO_VALOR).left().padBottom(4f).colspan(3).row();
-        agregarFila(tabla,usuarioAct.getUsername()+" (tu)",""+usuarioAct.getEstadisticas().getPuntuacionGeneral());
+        tabla.add(new Label(idiomas.get("stats.ranking"),skin)).left().padTop(14f).padBottom(6f).colspan(4).row();
+        tabla.add(new Label(idiomas.get("stats.col.usuario"),skin)).width(ANCHO_ETIQUETA).left().padBottom(4f);
+        tabla.add(new Label(idiomas.get("stats.col.puntuacion"),skin)).width(ANCHO_VALOR).left().padBottom(4f).colspan(3).row();
+        agregarFila(tabla,usuarioAct.getUsername()+" "+idiomas.get("stats.tu"),""+usuarioAct.getEstadisticas().getPuntuacionGeneral());
         for(String usernameAmigo:amigos){
             int puntos=gestorUsuarios.getPuntuacionDeUsuario(usernameAmigo);
             agregarFila(tabla,usernameAmigo,""+puntos);

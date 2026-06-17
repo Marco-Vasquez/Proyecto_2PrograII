@@ -14,6 +14,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.flowfree.FlowFreeGame;
+import com.flowfree.data.GestorIdiomas;
 import com.flowfree.data.GestorUsuarios;
 import com.flowfree.model.SolicitudAmistad;
 import com.flowfree.model.Usuario;
@@ -33,6 +34,7 @@ public class PantallaAmigos implements Screen{
     private static final float ENC_ALTO=52f;
     private static final float ENC_MARGEN_TOP=14f;
     private static final float RADIO_CIRC=20f;
+    private GestorIdiomas idiomas=GestorIdiomas.getInstance();
     private Label labelMensaje;
     public PantallaAmigos(FlowFreeGame juego,Usuario usuarioAct){
         this.juego=juego;
@@ -108,7 +110,7 @@ public class PantallaAmigos implements Screen{
         Table tablaEnc=new Table();
         tablaEnc.setPosition(encX,encY);
         tablaEnc.setSize(encAncho,ENC_ALTO);
-        tablaEnc.add(new Label("Flow Free",skin)).center().expand();
+        tablaEnc.add(new Label(idiomas.get("app.titulo"),skin)).center().expand();
         escenario.addActor(tablaEnc);
         List<String> todosLosUsuarios=gestorUsuarios.listarUsuariosRegistrados();
         List<String> usuariosDisponibles=new java.util.ArrayList<>();
@@ -121,7 +123,7 @@ public class PantallaAmigos implements Screen{
         }
         Table tablaContenido=new Table();
         tablaContenido.pad(12f);
-        tablaContenido.add(new Label("Amigos y Solicitudes",skin)).colspan(3).center().padBottom(14f).row();
+        tablaContenido.add(new Label(idiomas.get("amigos.titulo"),skin)).colspan(3).center().padBottom(14f).row();
         labelMensaje=new Label("",skin);
         List<SolicitudAmistad> pendientes=usuarioAct.getSolicitudesRecibidas();
         boolean hayPendientes=false;
@@ -129,25 +131,25 @@ public class PantallaAmigos implements Screen{
             if(s.isPendiente()) hayPendientes=true;
         }
         if(hayPendientes){
-            tablaContenido.add(new Label("Solicitudes recibidas:",skin)).colspan(3).left().padBottom(6f).row();
+            tablaContenido.add(new Label(idiomas.get("amigos.solicitudes"),skin)).colspan(3).left().padBottom(6f).row();
             for(SolicitudAmistad solicitud:pendientes){
                 if(!solicitud.isPendiente()) continue;
                 String emisor=solicitud.getEmisor();
                 tablaContenido.add(new Label(emisor,skin)).left().expandX().padRight(8f);
-                TextButton btnAceptar=new TextButton("Aceptar",skin);
-                TextButton btnRechazar=new TextButton("Rechazar",skin);
+                TextButton btnAceptar=new TextButton(idiomas.get("amigos.btn.aceptar"),skin);
+                TextButton btnRechazar=new TextButton(idiomas.get("amigos.btn.rechazar"),skin);
                 btnAceptar.setColor(EstiloUI.BTN_VERDE);
                 btnRechazar.setColor(EstiloUI.BTN_ROJO);
                 tablaContenido.add(btnAceptar).width(80f).height(30f).padRight(4f);
                 tablaContenido.add(btnRechazar).width(80f).height(30f).row();
                 btnAceptar.addListener(new ChangeListener(){
-                    public void changed(ChangeEvent evento,Actor actor){
+                    public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                         gestorUsuarios.aceptarSolicitud(usuarioAct,emisor);
                         juego.setScreen(new PantallaAmigos(juego,usuarioAct));
                     }
                 });
                 btnRechazar.addListener(new ChangeListener(){
-                    public void changed(ChangeEvent evento,Actor actor){
+                    public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                         gestorUsuarios.rechazarSolicitud(usuarioAct,emisor);
                         juego.setScreen(new PantallaAmigos(juego,usuarioAct));
                     }
@@ -155,22 +157,22 @@ public class PantallaAmigos implements Screen{
             }
             tablaContenido.add().height(10f).colspan(3).row();
         }
-        tablaContenido.add(new Label("Enviar solicitud:",skin)).colspan(3).left().padBottom(4f).row();
+        tablaContenido.add(new Label(idiomas.get("amigos.enviar"),skin)).colspan(3).left().padBottom(4f).row();
         if(usuariosDisponibles.isEmpty()){
-            tablaContenido.add(new Label("No hay usuarios disponibles",skin)).colspan(3).left().padBottom(8f).row();
+            tablaContenido.add(new Label(idiomas.get("amigos.nodisponibles"),skin)).colspan(3).left().padBottom(8f).row();
         }else{
             com.badlogic.gdx.scenes.scene2d.ui.SelectBox<String> selector=
                 new com.badlogic.gdx.scenes.scene2d.ui.SelectBox<>(skin);
             com.badlogic.gdx.utils.Array<String> items=new com.badlogic.gdx.utils.Array<>();
             for(String nombre:usuariosDisponibles) items.add(nombre);
             selector.setItems(items);
-            TextButton btnEnviar=new TextButton("Enviar",skin);
+            TextButton btnEnviar=new TextButton(idiomas.get("amigos.btn.enviar"),skin);
             btnEnviar.setColor(EstiloUI.BTN_AZUL);
             tablaContenido.add(selector).width(panelAncho*0.42f).height(34f).padRight(8f).colspan(2);
             tablaContenido.add(btnEnviar).width(80f).height(34f).row();
             tablaContenido.add(labelMensaje).colspan(3).left().padBottom(10f).row();
             btnEnviar.addListener(new ChangeListener(){
-                public void changed(ChangeEvent evento,Actor actor){
+                public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                     String seleccionado=selector.getSelected();
                     if(seleccionado==null) return;
                     boolean exito=gestorUsuarios.enviarSolicitud(usuarioAct.getUsername(),seleccionado);
@@ -178,18 +180,18 @@ public class PantallaAmigos implements Screen{
                         Usuario actualizado=gestorUsuarios.cargarUser(usuarioAct.getUsername());
                         if(actualizado!=null) juego.setScreen(new PantallaAmigos(juego,actualizado));
                     }else{
-                        labelMensaje.setText("No se pudo enviar la solicitud");
+                        labelMensaje.setText(idiomas.get("amigos.error.enviar"));
                     }
                 }
             });
         }
         List<String> amigos=usuarioAct.getAmigos();
-        tablaContenido.add(new Label("Mis amigos:",skin)).colspan(3).left().padBottom(6f).row();
+        tablaContenido.add(new Label(idiomas.get("amigos.mislista"),skin)).colspan(3).left().padBottom(6f).row();
         if(amigos.isEmpty()){
-            tablaContenido.add(new Label("Sin amigos todavia",skin)).colspan(3).left().row();
+            tablaContenido.add(new Label(idiomas.get("amigos.sinAmigos"),skin)).colspan(3).left().row();
         }else{
-            tablaContenido.add(new Label("Usuario",skin)).left().expandX().padBottom(4f);
-            tablaContenido.add(new Label("Puntos",skin)).left().padBottom(4f);
+            tablaContenido.add(new Label(idiomas.get("amigos.col.usuario"),skin)).left().expandX().padBottom(4f);
+            tablaContenido.add(new Label(idiomas.get("amigos.col.puntos"),skin)).left().padBottom(4f);
             tablaContenido.add().row();
             List<String> amigosOrdenados=new java.util.ArrayList<>(amigos);
             amigosOrdenados.sort((a,b)->
@@ -213,12 +215,12 @@ public class PantallaAmigos implements Screen{
         tablaRaiz.add().height(ENC_ALTO+ENC_MARGEN_TOP+8f).row();
         tablaRaiz.add(scroll).width(panelAncho*0.82f).maxHeight(altoTotal*0.62f).row();
         tablaRaiz.add().height(10f).row();
-        TextButton btnVolver=new TextButton("Volver al menu",skin);
+        TextButton btnVolver=new TextButton(idiomas.get("amigos.btn.volver"),skin);
         btnVolver.setColor(EstiloUI.BTN_AZUL);
         tablaRaiz.add(btnVolver).width(panelAncho*0.45f).height(36f).row();
         escenario.addActor(tablaRaiz);
         btnVolver.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaMenu(juego,usuarioAct));
             }
         });

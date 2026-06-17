@@ -17,6 +17,7 @@ import com.flowfree.FlowFreeGame;
 import com.flowfree.data.GestorIdiomas;
 import com.flowfree.data.GestorMusica;
 import com.flowfree.data.GestorUsuarios;
+import java.text.MessageFormat;
 import com.flowfree.game.FlowFree;
 import com.flowfree.game.GestorNiveles;
 import com.flowfree.model.EstadoCelda;
@@ -80,7 +81,10 @@ public class PantallaJuego implements Screen{
         );
         GestorIdiomas.getInstance().setEspanol(usuarioAct.getPerfil().isIdiomaEspanol());
         flowfree=new FlowFree();
-        flowfree.cargarNivel(gestorNiveles.getNivel(numNivelInicial));
+        if(!flowfree.cargarNivel(gestorNiveles.getNivel(numNivelInicial))){
+            juego.setScreen(new PantallaNiveles(juego,usuarioAct));
+            return;
+        }
         timerHilo=new com.flowfree.hilos.TimerJuego();
         timerHilo.iniciar();
         autoSave=new com.flowfree.hilos.AutoSave(usuarioAct,gestorUsuarios);
@@ -89,6 +93,7 @@ public class PantallaJuego implements Screen{
     }
     public void render(float delta){
         actualizarTimer();
+        if(autoSave!=null) autoSave.ejecutarGuardado();
         procesarInput();
         verificarYRegistrarVictoria();
         Gdx.gl.glClearColor(EstiloUI.FONDO.r,EstiloUI.FONDO.g,EstiloUI.FONDO.b,1f);
@@ -154,20 +159,19 @@ public class PantallaJuego implements Screen{
         dibujador.end();
     }
     private void construirHUD(){
-        Table tablaEnc=new Table();
-        tablaEnc.setFillParent(true);
-        tablaEnc.top();
+        Table tablaRaiz=new Table();
+        tablaRaiz.setFillParent(true);
+        tablaRaiz.top();
         float margenArriba=Gdx.graphics.getHeight()-(panelY+panelAlto)+8f;
-        tablaEnc.add(new Label(idiomas.get("app.titulo"),skin))
-            .colspan(3).center().padTop(margenArriba).height(ALTO_ENC);
-        escenario.addActor(tablaEnc);
+        tablaRaiz.add(new Label(idiomas.get("app.titulo"),skin))
+            .colspan(3).center().padTop(margenArriba).height(ALTO_ENC).row();
+        tablaRaiz.add().expandY().row();
         Table tablaHUD=new Table();
-        tablaHUD.setFillParent(true);
         tablaHUD.bottom().padBottom(panelY+6f).padLeft(panelX+10f).padRight(panelX+10f);
-        labelNivel=new Label("Nivel "+numNivelInicial,skin);
+        labelNivel=new Label(MessageFormat.format(idiomas.get("juego.label.nivel"), numNivelInicial),skin);
         labelTimer=new Label("00:00",skin);
-        labelMov=new Label("Mov: 0",skin);
-        labelFails=new Label("Fallos: 0",skin);
+        labelMov=new Label(MessageFormat.format(idiomas.get("juego.mov"), 0),skin);
+        labelFails=new Label(MessageFormat.format(idiomas.get("juego.fallos"), 0),skin);
         labelMsj=new Label("",skin);
         TextButton btnMenu=new TextButton(idiomas.get("juego.btn.menu"),skin);
         btnLimpiar=new TextButton(idiomas.get("juego.btn.limpiar"),skin);
@@ -188,14 +192,15 @@ public class PantallaJuego implements Screen{
         tablaHUD.add(tablaBotones).right().expandX();
         tablaHUD.row();
         tablaHUD.add(labelMsj).colspan(3).center().padTop(2);
-        escenario.addActor(tablaHUD);
+        tablaRaiz.add(tablaHUD).bottom().row();
+        escenario.addActor(tablaRaiz);
         btnMenu.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaMenu(juego,usuarioAct));
             }
         });
         btnLimpiar.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 if(flowfree.isNivelCompleto()) return;
                 flowfree.reiniciar();
                 tiempoAcum=0;
@@ -210,7 +215,7 @@ public class PantallaJuego implements Screen{
             }
         });
         btnDeshacer.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 if(flowfree.isNivelCompleto()) return;
                 flowfree.deshacerPaso();
             }
@@ -219,9 +224,9 @@ public class PantallaJuego implements Screen{
     private void actualizarHUD(){
         tiempoAcum=timerHilo.getSegundos();
         labelTimer.setText(String.format("%02d:%02d",(int)tiempoAcum/60,(int)tiempoAcum%60));
-        labelMov.setText("Mov: "+flowfree.getMovimientos());
-        labelFails.setText("Fallos: "+flowfree.getFallos());
-        labelNivel.setText("Nivel "+flowfree.getNivelAct());
+        labelMov.setText(MessageFormat.format(idiomas.get("juego.mov"), flowfree.getMovimientos()));
+        labelFails.setText(MessageFormat.format(idiomas.get("juego.fallos"), flowfree.getFallos()));
+        labelNivel.setText(MessageFormat.format(idiomas.get("juego.label.nivel"), flowfree.getNivelAct()));
         if(flowfree.isNivelCompleto()){
             timerHilo.pausar();
             btnLimpiar.setDisabled(true);
@@ -274,7 +279,7 @@ public class PantallaJuego implements Screen{
         modal.setBounds(modalX,modalY,anchoModal,altoModal);
         String tituloTexto=esUltimo
             ? idiomas.get("juego.victoria.todos")
-            : "Nivel "+nivelActual+" "+idiomas.get("juego.victoria.nivel");
+            : MessageFormat.format(idiomas.get("juego.label.nivel"), nivelActual) + " " + idiomas.get("juego.victoria.nivel");
         modal.add(new Label(tituloTexto,skin)).colspan(2).center().padTop(14f).padBottom(14f).row();
         modal.add(new Label(idiomas.get("juego.victoria.tiempo"),skin)).left().padRight(16f).padBottom(6f);
         modal.add(new Label(String.format("%02d:%02d",segundos/60,segundos%60),skin)).left().padBottom(6f).row();
@@ -299,17 +304,17 @@ public class PantallaJuego implements Screen{
         escenario.addActor(modal);
         final int numSiguiente=nivelActual+1;
         btnSiguienteModal.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaJuego(juego,usuarioAct,numSiguiente));
             }
         });
         btnReintentar.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaJuego(juego,usuarioAct,numNivelInicial));
             }
         });
         btnMapa.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaNiveles(juego,usuarioAct));
             }
         });

@@ -14,12 +14,14 @@ import com.badlogic.gdx.scenes.scene2d.ui.*;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.flowfree.FlowFreeGame;
+import com.flowfree.data.GestorIdiomas;
 /**
  *
  * @author mjosu
  */
 public class PantallaInicio implements Screen{
     private final FlowFreeGame juego;
+    private GestorIdiomas idiomas=GestorIdiomas.getInstance();
     private Stage escenario;
     private Skin skin;
     private ShapeRenderer dibujador;
@@ -99,12 +101,12 @@ public class PantallaInicio implements Screen{
         Table tablaEnc=new Table();
         tablaEnc.setPosition(encX,encY);
         tablaEnc.setSize(encAncho,ENC_ALTO);
-        tablaEnc.add(new Label("Flow Free",skin)).center().expand();
+        tablaEnc.add(new Label(idiomas.get("app.titulo"),skin)).center().expand();
         escenario.addActor(tablaEnc);
         float anchoBTN=panelAncho*0.50f;
-        TextButton btnLogin=new TextButton("Iniciar Sesion",skin);
-        TextButton btnRegistro=new TextButton("Crear cuenta",skin);
-        TextButton btnSalir=new TextButton("Salir",skin);
+        TextButton btnLogin=new TextButton(idiomas.get("inicio.btn.login"),skin);
+        TextButton btnRegistro=new TextButton(idiomas.get("inicio.btn.registro"),skin);
+        TextButton btnSalir=new TextButton(idiomas.get("inicio.btn.salir"),skin);
         btnLogin.setColor(EstiloUI.BTN_AZUL);
         btnRegistro.setColor(EstiloUI.BTN_VERDE);
         btnSalir.setColor(EstiloUI.BTN_ROJO);
@@ -115,20 +117,20 @@ public class PantallaInicio implements Screen{
         tablaRaiz.add(btnLogin).width(anchoBTN).height(46f).padBottom(14f).row();
         tablaRaiz.add(btnRegistro).width(anchoBTN).height(46f).padBottom(14f).row();
         tablaRaiz.add(btnSalir).width(anchoBTN).height(46f).padBottom(20f).row();
-        tablaRaiz.add(new Label("Conecta todos los puntos y completa cada nivel",skin)).center();
+        tablaRaiz.add(new Label(idiomas.get("inicio.subtitulo"),skin)).center();
         escenario.addActor(tablaRaiz);
         btnLogin.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaLogin(juego,false));
             }
         });
         btnRegistro.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaLogin(juego,true));
             }
         });
         btnSalir.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 Gdx.app.exit();
             }
         });

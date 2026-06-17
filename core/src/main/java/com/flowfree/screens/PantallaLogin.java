@@ -16,11 +16,16 @@ import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.flowfree.FlowFreeGame;
 import com.flowfree.data.GestorIdiomas;
 import com.flowfree.data.GestorUsuarios;
+import static com.flowfree.data.GestorUsuarios.ResultadoLogin.ERROR_ARCHIVO;
+import static com.flowfree.data.GestorUsuarios.ResultadoLogin.EXITO;
+import static com.flowfree.data.GestorUsuarios.ResultadoLogin.PASSWORD_INCORRECTA;
+import static com.flowfree.data.GestorUsuarios.ResultadoLogin.USUARIO_NO_EXISTE;
 import com.flowfree.data.HashUtil;
 import com.flowfree.exceptions.InvalidPasswordException;
 import com.flowfree.exceptions.UserExistenteException;
 import com.flowfree.model.Perfil;
 import com.flowfree.model.Usuario;
+import java.text.MessageFormat;
 /**
  *
  * @author andres
@@ -45,6 +50,7 @@ public class PantallaLogin implements Screen {
     private Label labelPasswordValida;
     private Label mensajeEstado;
     private Table tablaContenido;
+    private GestorIdiomas idiomas=GestorIdiomas.getInstance();
     private float panelX,panelY,panelAncho,panelAlto;
     private static final float ANCHO_CAMPO=290f;
     private static final float ALTO_CAMPO=38f;
@@ -71,7 +77,6 @@ public class PantallaLogin implements Screen {
     }
     public void resize(int ancho,int alto){
         if(escenario!=null) escenario.dispose();
-        modoRegistro=modoRegistro;
         construirEscenario();
     }
     public void pause(){}
@@ -116,7 +121,7 @@ public class PantallaLogin implements Screen {
         Table tablaEnc=new Table();
         tablaEnc.setPosition(encX,encY);
         tablaEnc.setSize(encAncho,ENC_ALTO);
-        tablaEnc.add(new Label("Flow Free",skin)).center().expand();
+        tablaEnc.add(new Label(idiomas.get("app.titulo"),skin)).center().expand();
         escenario.addActor(tablaEnc);
         float altoTotal=Gdx.graphics.getHeight();
         Table tablaRaiz=new Table();
@@ -133,23 +138,23 @@ public class PantallaLogin implements Screen {
     }
     private void construirFormulario(){
         tablaContenido.clearChildren();
-        String titulo=modoRegistro ? "Crear cuenta" : "Iniciar sesion";
+        String titulo=modoRegistro ? idiomas.get("registro.titulo") : idiomas.get("login.titulo");
         tablaContenido.add(new Label(titulo,skin)).colspan(2).center().padBottom(20f).row();
-        tablaContenido.add(new Label("Usuario:",skin)).left().padBottom(3f);
+        tablaContenido.add(new Label(idiomas.get("login.campo.usuario"),skin)).left().padBottom(3f);
         tablaContenido.add().row();
         campoUsername=new TextField("",skin);
         tablaContenido.add(campoUsername).colspan(2).width(ANCHO_CAMPO).height(ALTO_CAMPO).padBottom(10f).row();
         if(modoRegistro){
-            tablaContenido.add(new Label("Nombre completo:",skin)).left().padBottom(3f);
+            tablaContenido.add(new Label(idiomas.get("login.campo.nombre"),skin)).left().padBottom(3f);
             tablaContenido.add().row();
             campoNombreCompleto=new TextField("",skin);
             tablaContenido.add(campoNombreCompleto).colspan(2).width(ANCHO_CAMPO).height(ALTO_CAMPO).padBottom(10f).row();
         }
-        tablaContenido.add(new Label("Contrasena:",skin)).left().padBottom(3f);
+        tablaContenido.add(new Label(idiomas.get("login.campo.password"),skin)).left().padBottom(3f);
         tablaContenido.add().row();
         tablaContenido.add(crearFilaPassword()).colspan(2).padBottom(10f).row();
         if(modoRegistro){
-            tablaContenido.add(new Label("Confirmar contrasena:",skin)).left().padBottom(3f);
+            tablaContenido.add(new Label(idiomas.get("login.campo.confirmar"),skin)).left().padBottom(3f);
             tablaContenido.add().row();
             campoConfirmarPassword=new TextField("",skin);
             campoConfirmarPassword.setPasswordMode(true);
@@ -160,11 +165,11 @@ public class PantallaLogin implements Screen {
         mensajeEstado=new Label("",skin);
         mensajeEstado.setWrap(true);
         tablaContenido.add(mensajeEstado).colspan(2).width(ANCHO_CAMPO).padBottom(8f).row();
-        String textoAccion=modoRegistro ? "Registrarse" : "Entrar";
+        String textoAccion=modoRegistro ? idiomas.get("registro.btn.registrarse") : idiomas.get("login.btn.entrar");
         TextButton botonAccion=new TextButton(textoAccion,skin);
         botonAccion.setColor(modoRegistro ? EstiloUI.BTN_VERDE : EstiloUI.BTN_AZUL);
         tablaContenido.add(botonAccion).colspan(2).width(ANCHO_CAMPO).height(42f).padBottom(8f).row();
-        String textoCambio=modoRegistro ? "Ya tienes cuenta? Inicia sesion" : "No tienes cuenta? Registrate";
+        String textoCambio=modoRegistro ? idiomas.get("registro.btn.login") : idiomas.get("login.btn.registro");
         TextButton botonCambiarModo=new TextButton(textoCambio,skin);
         botonCambiarModo.setColor(EstiloUI.BTN_MORADOCLARO);
         tablaContenido.add(botonCambiarModo).colspan(2).width(ANCHO_CAMPO).height(36f).row();
@@ -177,13 +182,13 @@ public class PantallaLogin implements Screen {
             });
         }
         botonAccion.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 if(modoRegistro) intentarRegistro();
                 else intentarLogin();
             }
         });
         botonCambiarModo.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 modoRegistro=!modoRegistro;
                 passwordVisible=false;
                 campoConfirmarPassword=null;
@@ -196,14 +201,16 @@ public class PantallaLogin implements Screen {
         campoPassword=new TextField("",skin);
         campoPassword.setPasswordMode(true);
         campoPassword.setPasswordCharacter('*');
-        TextButton botonVer=new TextButton("Ver",skin);
+        String textoVer=idiomas.get("login.btn.ver");
+        String textoOcultar=idiomas.get("login.btn.ocultar");
+        TextButton botonVer=new TextButton(textoVer,skin);
         fila.add(campoPassword).width(ANCHO_CAMPO-70f).height(ALTO_CAMPO);
         fila.add(botonVer).width(62f).height(ALTO_CAMPO).padLeft(6f);
         botonVer.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 passwordVisible=!passwordVisible;
                 campoPassword.setPasswordMode(!passwordVisible);
-                botonVer.setText(passwordVisible ? "Ocultar" : "Ver");
+                botonVer.setText(passwordVisible ? textoOcultar : textoVer);
                 if(modoRegistro&&campoConfirmarPassword!=null)
                     campoConfirmarPassword.setPasswordMode(!passwordVisible);
             }
@@ -213,11 +220,11 @@ public class PantallaLogin implements Screen {
     private Table crearTablaRequisitos(){
         Table tablaRequisitos=new Table();
         tablaRequisitos.left();
-        labelOchoCaracteres=new Label("XX Minimo 8 caracteres",skin);
-        labelLetras=new Label("XX Contiene letras",skin);
-        labelNumeros=new Label("XX Contiene numeros",skin);
-        labelSimbolos=new Label("XX Contiene simbolo especial",skin);
-        labelPasswordValida=new Label("XX Contrasena valida",skin);
+        labelOchoCaracteres=new Label("XX "+idiomas.get("login.requisito.caracteres"),skin);
+        labelLetras=new Label("XX "+idiomas.get("login.requisito.letras"),skin);
+        labelNumeros=new Label("XX "+idiomas.get("login.requisito.numeros"),skin);
+        labelSimbolos=new Label("XX "+idiomas.get("login.requisito.simbolos"),skin);
+        labelPasswordValida=new Label("XX "+idiomas.get("login.requisito.valida"),skin);
         tablaRequisitos.add(labelOchoCaracteres).left().padBottom(2f).row();
         tablaRequisitos.add(labelLetras).left().padBottom(2f).row();
         tablaRequisitos.add(labelNumeros).left().padBottom(2f).row();
@@ -226,11 +233,11 @@ public class PantallaLogin implements Screen {
         return tablaRequisitos;
     }
     private void actualizarRequisitosPassword(String password){
-        marcarRequisito(labelOchoCaracteres,HashUtil.tieneMinOchoCarac(password),"Minimo 8 caracteres");
-        marcarRequisito(labelLetras,HashUtil.tieneLetras(password),"Contiene letras");
-        marcarRequisito(labelNumeros,HashUtil.tieneNumeros(password),"Contiene numeros");
-        marcarRequisito(labelSimbolos,HashUtil.tieneSimbolos(password),"Contiene simbolo especial");
-        marcarRequisito(labelPasswordValida,HashUtil.isValidPassword(password),"Contrasena valida");
+        marcarRequisito(labelOchoCaracteres,HashUtil.tieneMinOchoCarac(password),idiomas.get("login.requisito.caracteres"));
+        marcarRequisito(labelLetras,HashUtil.tieneLetras(password),idiomas.get("login.requisito.letras"));
+        marcarRequisito(labelNumeros,HashUtil.tieneNumeros(password),idiomas.get("login.requisito.numeros"));
+        marcarRequisito(labelSimbolos,HashUtil.tieneSimbolos(password),idiomas.get("login.requisito.simbolos"));
+        marcarRequisito(labelPasswordValida,HashUtil.isValidPassword(password),idiomas.get("login.requisito.valida"));
     }
     private void marcarRequisito(Label etiqueta,boolean cumplido,String texto){
         etiqueta.setText((cumplido ? "OK " : "XX ")+texto);
@@ -239,7 +246,7 @@ public class PantallaLogin implements Screen {
         String username=campoUsername.getText().trim();
         String password=campoPassword.getText();
         if(username.isEmpty()||password.isEmpty()){
-            mensajeEstado.setText("Completa todos los campos");
+            mensajeEstado.setText(idiomas.get("login.error.campos"));
             return;
         }
         Usuario[] resultado=new Usuario[1];
@@ -253,13 +260,13 @@ public class PantallaLogin implements Screen {
                 juego.setScreen(new PantallaMenu(juego, usuario));
                 break;
             case USUARIO_NO_EXISTE:
-                mensajeEstado.setText("El usuario no existe");
+                mensajeEstado.setText(idiomas.get("login.error.noexiste"));
                 break;
             case PASSWORD_INCORRECTA:
-                mensajeEstado.setText("Contrasena incorrecta");
+                mensajeEstado.setText(idiomas.get("login.error.password"));
                 break;
             case ERROR_ARCHIVO:
-                mensajeEstado.setText("Error al leer datos del usuario");
+                mensajeEstado.setText(idiomas.get("login.error.archivo"));
                 break;
         }
     }
@@ -269,24 +276,24 @@ public class PantallaLogin implements Screen {
         String password=campoPassword.getText();
         String confirmacion=campoConfirmarPassword.getText();
         if(username.isEmpty()||nombreCompleto.isEmpty()||password.isEmpty()||confirmacion.isEmpty()){
-            mensajeEstado.setText("Completa todos los campos");
+            mensajeEstado.setText(idiomas.get("login.error.campos"));
             return;
         }
         if(!password.equals(confirmacion)){
-            mensajeEstado.setText("Las contrasenas no coinciden");
+            mensajeEstado.setText(idiomas.get("login.error.nocoinciden"));
             return;
         }
         try{
             gestorUsuarios.registrarUsuarioSeguro(username,password,nombreCompleto);
-            mensajeEstado.setText("Usuario registrado. Ahora puedes iniciar sesion.");
+            mensajeEstado.setText(idiomas.get("login.exito.registro"));
             modoRegistro=false;
             passwordVisible=false;
             campoConfirmarPassword=null;
             construirFormulario();
         }catch(UserExistenteException error){
-            mensajeEstado.setText(error.getMessage());
+            mensajeEstado.setText(MessageFormat.format(idiomas.get(error.getMessage()), error.getUsernameExistente()));
         }catch(InvalidPasswordException error){
-            mensajeEstado.setText(error.getMessage());
+            mensajeEstado.setText(idiomas.get(error.getMessage()));
         }
     }
 }

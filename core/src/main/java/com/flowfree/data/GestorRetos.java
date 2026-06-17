@@ -43,7 +43,8 @@ public class GestorRetos {
             for(RetoCompetitivo r:retador.getRetos()){
                 if(r.getRetado().equals(retado.getUsername())
                         &&r.getNumNivel()==reto.getNumNivel()
-                        &&r.getEstado()==RetoCompetitivo.EstadoReto.ACEPTADO){
+                        &&(r.getEstado()==RetoCompetitivo.EstadoReto.ACEPTADO
+                        ||r.getEstado()==RetoCompetitivo.EstadoReto.PENDIENTE)){
                     r.registrarResultadoRetado(tiempo,mov,fallos);
                     break;
                 }

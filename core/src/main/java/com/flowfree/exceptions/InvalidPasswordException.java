@@ -24,6 +24,6 @@ public class InvalidPasswordException extends Exception {
      * @param motivo the detail message.
      */
     public InvalidPasswordException(String motivo) {
-        super("Contraseña inválida: "+motivo);
+        super(motivo);
     }
 }

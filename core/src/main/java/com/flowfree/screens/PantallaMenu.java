@@ -105,7 +105,7 @@ public class PantallaMenu implements Screen{
         Table tablaEnc=new Table();
         tablaEnc.setPosition(encX,encY);
         tablaEnc.setSize(encAncho,ENC_ALTO);
-        tablaEnc.add(new Label("Flow Free",skin)).center().expand();
+        tablaEnc.add(new Label(idiomas.get("app.titulo"),skin)).center().expand();
         escenario.addActor(tablaEnc);
         float anchoBTN=panelAncho*0.52f;
         float altoBTN=38f;
@@ -140,42 +140,42 @@ public class PantallaMenu implements Screen{
         tablaRaiz.add(btnCerrarSesion).width(anchoBTN).height(altoBTN).row();
         escenario.addActor(tablaRaiz);
         btnJugar.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaNiveles(juego,usuarioAct));
             }
         });
         btnNiveles.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaNiveles(juego,usuarioAct));
             }
         });
         btnPerfil.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaPerfil(juego,usuarioAct));
             }
         });
         btnEstadisticas.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaEstadisticas(juego,usuarioAct));
             }
         });
         btnAmigos.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaAmigos(juego,usuarioAct));
             }
         });
         btnRetos.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaRetos(juego,usuarioAct));
             }
         });
         btnConfiguraciones.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaConfiguraciones(juego,usuarioAct));
             }
         });
         btnCerrarSesion.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaInicio(juego));
             }
         });

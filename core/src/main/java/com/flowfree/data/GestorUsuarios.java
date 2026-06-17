@@ -57,7 +57,7 @@ public class GestorUsuarios {
             }   
             usuario.actualizarUltimaSesion();
             guardarUser(usuario);
-            if(usuarioSalida!=null && usuarioSalida.length>=0){
+            if(usuarioSalida!=null && usuarioSalida.length>0){
                 usuarioSalida[0]=usuario;
             }
             return ResultadoLogin.EXITO;
@@ -92,7 +92,7 @@ public class GestorUsuarios {
             throw new com.flowfree.exceptions.UserExistenteException(username);
         }
         if(!HashUtil.isValidPassword(passwordPlana)){
-            throw new com.flowfree.exceptions.InvalidPasswordException("Debe tener mí­nimo 8 caracteres, letras, números y mínimo un caracter especial");
+            throw new com.flowfree.exceptions.InvalidPasswordException("login.error.password.requisitos");
         }
         String salt,hash;
         Usuario nuevoUser;

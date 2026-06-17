@@ -114,14 +114,14 @@ public class PantallaConfiguraciones implements Screen{
         Table tablaEnc=new Table();
         tablaEnc.setPosition(encX,encY);
         tablaEnc.setSize(encAncho,ENC_ALTO);
-        tablaEnc.add(new Label("Flow Free",skin)).center().expand();
+        tablaEnc.add(new Label(idiomas.get("app.titulo"),skin)).center().expand();
         escenario.addActor(tablaEnc);
         Perfil perfil=usuarioAct.getPerfil();
         GestorMusica gestor=GestorMusica.getInstance();
         Table tablaContenido=new Table();
         tablaContenido.pad(16f);
-        tablaContenido.add(new Label("Configuraciones",skin)).colspan(2).center().padBottom(20f).row();
-        tablaContenido.add(new Label("Volumen:",skin)).left().padRight(20f).padBottom(12f);
+        tablaContenido.add(new Label(idiomas.get("config.titulo"),skin)).colspan(2).center().padBottom(20f).row();
+        tablaContenido.add(new Label(idiomas.get("config.volumen"),skin)).left().padRight(20f).padBottom(12f);
         float volumenInicial=perfil.getVolumen();
         sliderVolumen=new Slider(0f,1f,0.05f,false,skin);
         sliderVolumen.setValue(volumenInicial);
@@ -130,18 +130,18 @@ public class PantallaConfiguraciones implements Screen{
         filaVolumen.add(sliderVolumen).width(panelAncho*0.35f).padRight(10f);
         filaVolumen.add(labelVolumenValor).width(40f);
         tablaContenido.add(filaVolumen).left().padBottom(12f).row();
-        tablaContenido.add(new Label("Musica:",skin)).left().padRight(20f).padBottom(12f);
-        String textoMusica=perfil.isMusicaActiva() ? "Activada" : "Desactivada";
+        tablaContenido.add(new Label(idiomas.get("config.musica"),skin)).left().padRight(20f).padBottom(12f);
+        String textoMusica=perfil.isMusicaActiva() ? idiomas.get("config.musica.on") : idiomas.get("config.musica.off");
         btnMusica=new TextButton(textoMusica,skin);
         btnMusica.setColor(perfil.isMusicaActiva() ? EstiloUI.BTN_VERDE : EstiloUI.BTN_ROJO);
         tablaContenido.add(btnMusica).width(panelAncho*0.35f).height(36f).left().padBottom(12f).row();
-        tablaContenido.add(new Label("Idioma:",skin)).left().padRight(20f).padBottom(12f);
-        String textoIdioma=perfil.isIdiomaEspanol() ? "Espanol" : "English";
+        tablaContenido.add(new Label(idiomas.get("config.idioma"),skin)).left().padRight(20f).padBottom(12f);
+        String textoIdioma=perfil.isIdiomaEspanol() ? idiomas.get("config.idioma.es") : idiomas.get("config.idioma.en");
         btnIdioma=new TextButton(textoIdioma,skin);
         btnIdioma.setColor(EstiloUI.BTN_CYAN);
         tablaContenido.add(btnIdioma).width(panelAncho*0.35f).height(36f).left().padBottom(20f).row();
-        TextButton btnGuardar=new TextButton("Guardar",skin);
-        TextButton btnVolver=new TextButton("Volver al menu",skin);
+        TextButton btnGuardar=new TextButton(idiomas.get("config.btn.guardar"),skin);
+        TextButton btnVolver=new TextButton(idiomas.get("config.btn.volver"),skin);
         btnGuardar.setColor(EstiloUI.BTN_VERDE);
         btnVolver.setColor(EstiloUI.BTN_AZUL);
         tablaContenido.add(btnGuardar).colspan(2).width(panelAncho*0.45f).height(38f).center().padBottom(10f).row();
@@ -156,7 +156,7 @@ public class PantallaConfiguraciones implements Screen{
         tablaRaiz.add(scroll).width(panelAncho*0.80f).maxHeight(Gdx.graphics.getHeight()*0.65f).row();
         escenario.addActor(tablaRaiz);
         sliderVolumen.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 float val=sliderVolumen.getValue();
                 labelVolumenValor.setText(String.format("%d%%",(int)(val*100)));
                 perfil.setVolumen(val);
@@ -164,19 +164,19 @@ public class PantallaConfiguraciones implements Screen{
             }
         });
         btnMusica.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 boolean nuevo=!perfil.isMusicaActiva();
                 perfil.setMusicaActiva(nuevo);
-                btnMusica.setText(nuevo ? "Activada" : "Desactivada");
+                btnMusica.setText(nuevo ? idiomas.get("config.musica.on") : idiomas.get("config.musica.off"));
                 btnMusica.setColor(nuevo ? EstiloUI.BTN_VERDE : EstiloUI.BTN_ROJO);
                 gestor.aplicarConfiguracion(sliderVolumen.getValue(),nuevo);
             }
         });
         btnIdioma.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 boolean nuevo=!perfil.isIdiomaEspanol();
                 perfil.setIdiomaEspanol(nuevo);
-                btnIdioma.setText(nuevo ? "Espanol" : "English");
+                btnIdioma.setText(nuevo ? idiomas.get("config.idioma.es") : idiomas.get("config.idioma.en"));
 
                 GestorIdiomas.getInstance().setEspanol(nuevo);
 
@@ -184,7 +184,7 @@ public class PantallaConfiguraciones implements Screen{
             }
         });
         btnGuardar.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 perfil.setVolumen(sliderVolumen.getValue());
                 gestorUsuarios.guardarUser(usuarioAct);
                 gestor.aplicarConfiguracion(perfil.getVolumen(),perfil.isMusicaActiva());
@@ -192,7 +192,7 @@ public class PantallaConfiguraciones implements Screen{
             }
         });
         btnVolver.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaMenu(juego,usuarioAct));
             }
         });

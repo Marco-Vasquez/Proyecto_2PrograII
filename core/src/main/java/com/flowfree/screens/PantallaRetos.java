@@ -20,6 +20,7 @@ import com.flowfree.game.GestorNiveles;
 import com.flowfree.model.Nivel;
 import com.flowfree.model.RetoCompetitivo;
 import com.flowfree.model.Usuario;
+import java.text.MessageFormat;
 import java.util.List;
 /**
  *
@@ -133,12 +134,16 @@ public class PantallaRetos implements Screen{
                 tablaContenido.add(btnAceptar).width(100f).height(30f).padRight(4f);
                 tablaContenido.add(btnRechazar).width(80f).height(30f).row();
                 btnAceptar.addListener(new ChangeListener(){
-                    public void changed(ChangeEvent evento,Actor actor){
-                        juego.setScreen(new PantallaJuegoReto(juego,usuarioAct,reto,gestorRetos));
+                    public void changed(ChangeListener.ChangeEvent evento,Actor actor){
+                        if(usuarioAct.getNivelDesbloqueado()>=reto.getNumNivel()){
+                            juego.setScreen(new PantallaJuegoReto(juego,usuarioAct,reto,gestorRetos));
+                        }else{
+                            labelMensaje.setText(idiomas.get("retos.nivelBloqueado"));
+                        }
                     }
                 });
                 btnRechazar.addListener(new ChangeListener(){
-                    public void changed(ChangeEvent evento,Actor actor){
+                    public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                         gestorRetos.rechazarReto(usuarioAct,reto);
                         juego.setScreen(new PantallaRetos(juego,usuarioAct));
                     }
@@ -161,23 +166,23 @@ public class PantallaRetos implements Screen{
             SelectBox<String> selectorNivel=new SelectBox<>(skin);
             com.badlogic.gdx.utils.Array<String> itemsNiveles=new com.badlogic.gdx.utils.Array<>();
             for(Nivel n:niveles){
-                if(n.isDesbloqueado()) itemsNiveles.add("Nivel "+n.getNumNivel());
+                if(n.isDesbloqueado()) itemsNiveles.add(MessageFormat.format(idiomas.get("retos.nivel.item"), n.getNumNivel()));
             }
             if(!itemsNiveles.isEmpty()) selectorNivel.setItems(itemsNiveles);
             TextButton btnEnviarReto=new TextButton(idiomas.get("retos.btn.enviar"),skin);
             btnEnviarReto.setColor(EstiloUI.BTN_NARANJA);
-            tablaContenido.add(new Label(idiomas.get("retos.nuevo"),skin)).left().padBottom(4f);
             tablaContenido.add(selectorAmigo).width(panelAncho*0.35f).height(34f).padBottom(4f).colspan(2).row();
             tablaContenido.add(new Label(idiomas.get("retos.selNivel"),skin)).left().padBottom(4f);
             tablaContenido.add(selectorNivel).width(panelAncho*0.35f).height(34f).padBottom(4f).colspan(2).row();
             tablaContenido.add(btnEnviarReto).colspan(3).width(panelAncho*0.45f).height(34f).center().padBottom(6f).row();
             tablaContenido.add(labelMensaje).colspan(3).left().row();
             btnEnviarReto.addListener(new ChangeListener(){
-                public void changed(ChangeEvent evento,Actor actor){
+                public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                     String amigoSel=selectorAmigo.getSelected();
                     String nivelSel=selectorNivel.getSelected();
                     if(amigoSel==null||nivelSel==null) return;
-                    int numNivel=Integer.parseInt(nivelSel.replace("Nivel ","").trim());
+                    String[] partesNivel=nivelSel.split(" ");
+                    int numNivel=Integer.parseInt(partesNivel[partesNivel.length-1].trim());
                     Usuario amigo=gestorUsuarios.cargarUser(amigoSel);
                     if(amigo==null||amigo.getNivelDesbloqueado()<numNivel){
                         labelMensaje.setText(idiomas.get("retos.nivelBloqueado"));
@@ -190,8 +195,6 @@ public class PantallaRetos implements Screen{
                             ? retadorActualizado.getRetos() : usuarioAct.getRetos();
                         if(!retosEnviados.isEmpty()){
                             RetoCompetitivo retoNuevo=retosEnviados.get(retosEnviados.size()-1);
-                            gestorRetos.registrarResultadoRetador(
-                                usuarioAct,retosEnviados.size()-1,0,0,0);
                             juego.setScreen(new PantallaJuegoReto(juego,usuarioAct,retoNuevo,gestorRetos));
                         }
                     }else{
@@ -215,7 +218,7 @@ public class PantallaRetos implements Screen{
         tablaRaiz.add(btnVolver).width(panelAncho*0.45f).height(36f).row();
         escenario.addActor(tablaRaiz);
         btnVolver.addListener(new ChangeListener(){
-            public void changed(ChangeEvent evento,Actor actor){
+            public void changed(ChangeListener.ChangeEvent evento,Actor actor){
                 juego.setScreen(new PantallaMenu(juego,usuarioAct));
             }
         });

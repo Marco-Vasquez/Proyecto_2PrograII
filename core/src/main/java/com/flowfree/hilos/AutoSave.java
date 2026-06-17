@@ -15,10 +15,12 @@ public class AutoSave implements Runnable{
     private final GestorUsuarios gestorUsuarios;
     private static final int INTERVALO_SEG=30;
     private Thread hilo;
+    private volatile boolean pendienteGuardar;
     public AutoSave(Usuario usuario,GestorUsuarios gestorUsuarios){
         this.usuario=usuario;
         this.gestorUsuarios=gestorUsuarios;
         this.corriendo=false;
+        this.pendienteGuardar=false;
     }
     public void iniciar(){
         corriendo=true;
@@ -34,10 +36,19 @@ public class AutoSave implements Runnable{
         while(corriendo){
             try{
                 Thread.sleep(INTERVALO_SEG*1000);
-                if(corriendo) gestorUsuarios.guardarUser(usuario);
+                if(corriendo) pendienteGuardar=true;
             }catch(InterruptedException e){
                 corriendo=false;
             }
+        }
+    }
+    public boolean isPendienteGuardar(){
+        return pendienteGuardar;
+    }
+    public void ejecutarGuardado(){
+        if(pendienteGuardar){
+            pendienteGuardar=false;
+            gestorUsuarios.guardarUser(usuario);
         }
     }
 }
