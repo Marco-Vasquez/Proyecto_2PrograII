@@ -22,6 +22,7 @@ import com.flowfree.model.RetoCompetitivo;
 import com.flowfree.model.Usuario;
 import java.text.MessageFormat;
 import java.util.List;
+import java.util.Set;
 /**
  *
  * @author andres
@@ -121,35 +122,46 @@ public class PantallaRetos implements Screen{
         tablaContenido.pad(12f);
         tablaContenido.add(new Label(idiomas.get("retos.titulo"),skin)).colspan(3).center().padBottom(14f).row();
         labelMensaje=new Label("",skin);
-        List<RetoCompetitivo> pendientes=gestorRetos.getRetosPendientes(usuarioAct);
-        if(!pendientes.isEmpty()){
-            tablaContenido.add(new Label(idiomas.get("retos.pendientes"),skin)).colspan(3).left().padBottom(6f).row();
-            for(RetoCompetitivo reto:pendientes){
-                String textoReto=reto.getRetador()+" - Nivel "+reto.getNumNivel();
-                tablaContenido.add(new Label(textoReto,skin)).left().expandX().padRight(6f);
-                TextButton btnAceptar=new TextButton(idiomas.get("retos.btn.aceptar"),skin);
-                TextButton btnRechazar=new TextButton(idiomas.get("retos.btn.rechazar"),skin);
-                btnAceptar.setColor(EstiloUI.BTN_VERDE);
-                btnRechazar.setColor(EstiloUI.BTN_ROJO);
-                tablaContenido.add(btnAceptar).width(100f).height(30f).padRight(4f);
-                tablaContenido.add(btnRechazar).width(80f).height(30f).row();
-                btnAceptar.addListener(new ChangeListener(){
-                    public void changed(ChangeListener.ChangeEvent evento,Actor actor){
-                        if(usuarioAct.getNivelDesbloqueado()>=reto.getNumNivel()){
-                            juego.setScreen(new PantallaJuegoReto(juego,usuarioAct,reto,gestorRetos));
-                        }else{
-                            labelMensaje.setText(idiomas.get("retos.nivelBloqueado"));
-                        }
-                    }
-                });
-                btnRechazar.addListener(new ChangeListener(){
-                    public void changed(ChangeListener.ChangeEvent evento,Actor actor){
-                        gestorRetos.rechazarReto(usuarioAct,reto);
-                        juego.setScreen(new PantallaRetos(juego,usuarioAct));
-                    }
-                });
+        List<RetoCompetitivo> todosLosRetos=usuarioAct.getRetos();
+        todosLosRetos.addAll(usuarioAct.getRetosRecibidos());
+        boolean hayCompletados=false;
+        for(RetoCompetitivo r:todosLosRetos){
+            if(r.getEstado()==RetoCompetitivo.EstadoReto.COMPLETADO){
+                hayCompletados=true;
+                break;
             }
-            tablaContenido.add().height(10f).colspan(3).row();
+        }
+        if(hayCompletados){
+            tablaContenido.add(new Label("Resultados de retos:",skin)).colspan(3).left().padTop(10f).padBottom(6f).row();
+            tablaContenido.add(new Label("Rival",skin)).left().expandX().padBottom(4f);
+            tablaContenido.add(new Label("Nivel",skin)).left().padRight(10f).padBottom(4f);
+            tablaContenido.add(new Label("Resultado",skin)).left().padBottom(4f).row();
+            java.util.Set<String> retosVistos=new java.util.HashSet<>();
+            for(RetoCompetitivo r:todosLosRetos){
+                if(r.getEstado()!=RetoCompetitivo.EstadoReto.COMPLETADO) continue;
+                String claveUnica=r.getRetador()+"-"+r.getRetado()+"-"+r.getNumNivel();
+                if(retosVistos.contains(claveUnica)) continue;
+                retosVistos.add(claveUnica);
+                String rival=r.getRetador().equals(usuarioAct.getUsername())
+                    ? r.getRetado() : r.getRetador();
+                String ganador=r.getGanador();
+                String resultado;
+                if("empate".equals(ganador)) resultado=idiomas.get("retos.empate");
+                else if(usuarioAct.getUsername().equals(ganador)) resultado=idiomas.get("retos.ganaste");
+                else resultado=idiomas.get("retos.perdiste");
+                String tiempoRetador=String.format("%02d:%02d",r.getTiempoRetador()/60,r.getTiempoRetador()%60);
+                String tiempoRetado=String.format("%02d:%02d",r.getTiempoRetado()/60,r.getTiempoRetado()%60);
+                String detalle=rival+" | "+tiempoRetador+" vs "+tiempoRetado
+                    +" | Fallos: "+r.getFallosRetador()+" vs "+r.getFallosRetado();
+                tablaContenido.add(new Label(detalle,skin)).left().expandX().padBottom(2f);
+                tablaContenido.add(new Label(""+r.getNumNivel(),skin)).left().padRight(10f).padBottom(2f);
+                Label labelResultado=new Label(resultado,skin);
+                if(idiomas.get("retos.ganaste").equals(resultado))
+                    labelResultado.setColor(EstiloUI.BTN_VERDE);
+                else if(idiomas.get("retos.perdiste").equals(resultado))
+                    labelResultado.setColor(EstiloUI.BTN_ROJO);
+                tablaContenido.add(labelResultado).left().padBottom(2f).row();
+            }
         }else{
             tablaContenido.add(new Label(idiomas.get("retos.sinRetos"),skin)).colspan(3).left().padBottom(10f).row();
         }
